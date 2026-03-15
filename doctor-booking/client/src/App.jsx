@@ -1,0 +1,84 @@
+import { Routes, Route } from 'react-router-dom'
+import Navbar from './components/Navbar'
+import Home from './pages/Home'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import PatientDashboard from './pages/PatientDashboard'
+import DoctorDashboard from './pages/DoctorDashboard'
+import AdminDashboard from './pages/AdminDashboard'
+import Messages from './pages/Messages'
+import Unauthorized from './pages/Unauthorized'
+import Doctors from './pages/Doctors'
+import DoctorProfile from './pages/DoctorProfile'
+import PaymentHistory from './pages/PaymentHistory'
+import PrivateRoute from './components/PrivateRoute'
+import RoleRoute from './components/RoleRoute'
+import { AuthProvider } from './context/AuthContext'
+import { RealtimeProvider } from './context/RealtimeContext'
+import { Toaster } from 'react-hot-toast'
+import SecuritySettings from './pages/SecuritySettings'
+import MyWaitlist from './pages/MyWaitlist'
+import NotFound from './pages/NotFound';
+
+function App() {
+       return (
+              <AuthProvider>
+                     <Toaster position="top-right" />
+                     <RealtimeProvider>
+                            <div className="min-h-screen bg-gray-50">
+                                   <Navbar />
+                                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                          <Routes>
+                                                 <Route path="/" element={<Home />} />
+                                                 <Route path="/login" element={<Login />} />
+                                                 <Route path="/register" element={<Register />} />
+                                                 <Route path="/doctors" element={<Doctors />} />
+                                                 <Route path="/doctors/:id" element={<DoctorProfile />} />
+                                                 <Route path="/unauthorized" element={<Unauthorized />} />
+
+                                                 {/* Protected Routes */}
+                                                 <Route path="/dashboard" element={
+                                                        <PrivateRoute>
+                                                                <RoleRoute allowedRoles={['patient']}><PatientDashboard /></RoleRoute>
+                                                        </PrivateRoute>
+                                                 } />
+                                                 <Route path="/doctor/dashboard" element={
+                                                        <PrivateRoute>
+                                                                <RoleRoute allowedRoles={['doctor']}><DoctorDashboard /></RoleRoute>
+                                                        </PrivateRoute>
+                                                 } />
+                                                 <Route path="/admin/dashboard" element={
+                                                        <PrivateRoute>
+                                                                <RoleRoute allowedRoles={['admin']}><AdminDashboard /></RoleRoute>
+                                                        </PrivateRoute>
+                                                 } />
+                                                 <Route path="/messages" element={
+                                                        <PrivateRoute>
+                                                               <Messages />
+                                                        </PrivateRoute>
+                                                 } />
+                                                 <Route path="/payments/history" element={
+                                                        <PrivateRoute>
+                                                               <PaymentHistory />
+                                                        </PrivateRoute>
+                                                 } />
+                                                 <Route path="/security" element={
+                                                        <PrivateRoute>
+                                                               <SecuritySettings />
+                                                        </PrivateRoute>
+                                                 } />
+                                                 <Route path="/waitlist" element={
+                                                        <PrivateRoute>
+                                                               <RoleRoute allowedRoles={['patient']}><MyWaitlist /></RoleRoute>
+                                                        </PrivateRoute>
+                                                 } />
+                                                 <Route path="*" element={<NotFound />} />
+                                          </Routes>
+                                   </div>
+                            </div>
+                     </RealtimeProvider>
+              </AuthProvider>
+       )
+}
+
+export default App
