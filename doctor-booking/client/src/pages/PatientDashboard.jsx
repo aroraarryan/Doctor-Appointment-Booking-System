@@ -129,6 +129,12 @@ const PatientDashboard = () => {
                                    >
                                           Payments
                                    </button>
+                                    <button
+                                           onClick={() => navigate('/health')}
+                                           className="flex-1 md:flex-none bg-indigo-50 text-indigo-600 border-2 border-indigo-100 px-8 py-3 rounded-2xl font-bold hover:bg-indigo-100 transition-all shadow-sm"
+                                    >
+                                           Health Tools
+                                    </button>
                                    <button
                                           onClick={() => navigate('/doctors')}
                                           className="flex-1 md:flex-none bg-indigo-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"

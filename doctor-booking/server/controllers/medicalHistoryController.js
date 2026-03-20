@@ -85,13 +85,6 @@ const getMedicalHistory = async (req, res) => {
             lab_analyses: labAnalyses || []
         };
 
-        console.log('Medical history fetched successfully:', {
-            appointments: history.appointments.length,
-            prescriptions: history.prescriptions.length,
-            records: history.medical_records.length,
-            payments: history.payments.length,
-            lab_analyses: history.lab_analyses.length
-        });
         res.status(200).json(history);
     } catch (error) {
         console.error('getMedicalHistory Error:', error);

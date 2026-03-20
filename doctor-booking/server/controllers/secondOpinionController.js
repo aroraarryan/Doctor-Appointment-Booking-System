@@ -3,13 +3,14 @@ const { createNotification } = require('../utils/notifications');
 
 // POST /api/second-opinions
 const requestSecondOpinion = async (req, res) => {
-    const { case_summary, symptoms, existing_diagnosis, medical_record_ids } = req.body;
+    const { original_doctor_id, case_summary, symptoms, existing_diagnosis, medical_record_ids } = req.body;
 
     try {
         const { data, error } = await supabase
             .from('second_opinions')
             .insert([{
                 patient_id: req.user.id,
+                original_doctor_id,
                 case_summary,
                 symptoms,
                 existing_diagnosis,
@@ -149,6 +150,10 @@ const getMyRequests = async (req, res) => {
             .from('second_opinions')
             .select(`
                 *,
+                original_doctor:original_doctor_id (
+                    specialty,
+                    profile:profiles (name)
+                ),
                 responses:second_opinion_responses (
                     *,
                     doctor:doctor_id (

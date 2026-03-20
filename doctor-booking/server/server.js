@@ -22,6 +22,12 @@ app.use(cors());
 app.use(express.json());
 app.use(fileUpload());
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 // Routes
 const authRoutes = require('./routes/auth');
 const doctorRoutes = require('./routes/doctors');
@@ -41,6 +47,9 @@ const prescriptionRoutes = require('./routes/prescriptions');
 const medicalHistoryRoutes = require('./routes/medicalHistory');
 const labAnalysisRoutes = require('./routes/labAnalysis');
 const secondOpinionRoutes = require('./routes/secondOpinion');
+const healthMetricsRoutes = require('./routes/healthMetrics');
+const medicineReminderRoutes = require('./routes/medicineReminders');
+const symptomCheckerRoutes = require('./routes/symptomChecker');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
@@ -60,6 +69,9 @@ app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/medical-history', medicalHistoryRoutes);
 app.use('/api/lab-analysis', labAnalysisRoutes);
 app.use('/api/second-opinions', secondOpinionRoutes);
+app.use('/api/health-metrics', healthMetricsRoutes);
+app.use('/api/medicine-reminders', medicineReminderRoutes);
+app.use('/api/symptom-checker', symptomCheckerRoutes);
 
 app.get('/api/health', (req, res) => {
        res.status(200).json({ status: "OK", timestamp: new Date() });

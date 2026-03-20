@@ -22,6 +22,7 @@ import Prescriptions from './pages/Prescriptions';
 import MedicalHistory from './pages/MedicalHistory';
 import SecondOpinion from './pages/SecondOpinion';
 import SecondOpinionRequests from './pages/SecondOpinionRequests';
+import HealthDashboard from './pages/HealthDashboard';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -71,6 +72,11 @@ function App() {
                                                                <SecuritySettings />
                                                         </PrivateRoute>
                                                  } />
+                                                  <Route path="/health" element={
+                                                         <PrivateRoute>
+                                                                <RoleRoute allowedRoles={['patient']}><HealthDashboard /></RoleRoute>
+                                                         </PrivateRoute>
+                                                  } />
                                                   <Route path="/waitlist" element={
                                                          <PrivateRoute>
                                                                 <RoleRoute allowedRoles={['patient']}><MyWaitlist /></RoleRoute>

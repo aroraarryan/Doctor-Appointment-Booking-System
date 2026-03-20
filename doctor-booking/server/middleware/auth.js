@@ -17,6 +17,7 @@ const verifyToken = async (req, res, next) => {
               const { data: { user }, error } = await supabase.auth.getUser(token);
 
               if (error || !user) {
+                     console.error('JWT Verification Error:', error);
                      res.setHeader('x-auth-failure', 'invalid_jwt');
                      return res.status(401).json({ error: 'Invalid or expired token' });
               }
@@ -32,6 +33,7 @@ const verifyToken = async (req, res, next) => {
                             .single();
 
                      if (sessionError || !session) {
+                            console.error('Session Verification Error:', sessionError);
                             res.setHeader('x-auth-failure', 'session_revoked');
                             return res.status(401).json({ error: 'Session revoked or invalid' });
                      }

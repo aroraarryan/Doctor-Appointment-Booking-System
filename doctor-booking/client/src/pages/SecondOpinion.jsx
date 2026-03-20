@@ -21,8 +21,8 @@ const SecondOpinion = () => {
                 api.get('/second-opinions/my'),
                 api.get('/doctors')
             ]);
-            setRequests(reqRes.data);
-            setDoctors(docRes.data);
+            setRequests(Array.isArray(reqRes.data) ? reqRes.data : []);
+            setDoctors(Array.isArray(docRes.data) ? docRes.data : []);
         } catch (error) {
             console.error('Fetch error:', error);
             toast.error('Failed to load data');
@@ -86,8 +86,8 @@ const SecondOpinion = () => {
                                     onChange={(e) => setFormData({...formData, original_doctor_id: e.target.value})}
                                 >
                                     <option value="">Select Doctor</option>
-                                    {doctors.map(doc => (
-                                        <option key={doc.id} value={doc.id}>Dr. {doc.profile.name} ({doc.specialty})</option>
+                                    {Array.isArray(doctors) && doctors.map(doc => (
+                                        <option key={doc.id} value={doc.id}>Dr. {doc.name || doc.profile?.name || 'Unknown'} ({doc.specialty || 'General'})</option>
                                     ))}
                                 </select>
                             </div>
@@ -147,11 +147,12 @@ const SecondOpinion = () => {
                     <SkeletonCard count={3} />
                 ) : requests.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {requests.map(req => (
+                        {Array.isArray(requests) && requests.map(req => (
                             <div key={req.id} className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 relative overflow-hidden group">
                                 <div className={`absolute top-0 right-0 px-6 py-2 rounded-bl-2xl text-[10px] font-black uppercase tracking-widest ${
                                     req.status === 'completed' ? 'bg-green-100 text-green-700' : 
-                                    req.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'
+                                    req.status === 'in_review' ? 'bg-amber-100 text-amber-700' : 
+                                    req.status === 'open' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
                                 }`}>
                                     {req.status}
                                 </div>
@@ -173,13 +174,24 @@ const SecondOpinion = () => {
                                         <p className="text-sm font-bold text-gray-600 line-clamp-2 italic">"{req.symptoms}"</p>
                                     </div>
                                     
-                                    {req.opinion_report && (
-                                        <div className="mt-6 pt-6 border-t border-gray-50">
-                                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">Expert Opinion</p>
-                                            <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-50">
-                                                <p className="text-sm font-bold text-gray-800 leading-relaxed line-clamp-3">{req.opinion_report}</p>
-                                                <button className="text-indigo-600 text-xs font-black uppercase tracking-widest mt-3 hover:underline">Read Full Report</button>
-                                            </div>
+                                    {req.responses && req.responses.length > 0 && (
+                                        <div className="mt-6 pt-6 border-t border-gray-50 space-y-4">
+                                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">Expert Opinions ({req.responses.length})</p>
+                                            {req.responses.map(resp => (
+                                                <div key={resp.id} className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-50">
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <span className="text-[10px] font-black text-gray-400">Response from Dr. {resp.doctor?.profile?.name || 'Reviewer'}</span>
+                                                        <span className="text-[8px] text-gray-400 capitalize">{new Date(resp.created_at).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <p className="text-sm font-bold text-gray-800 leading-relaxed line-clamp-3">{resp.opinion}</p>
+                                                    {resp.recommendation && (
+                                                        <div className="mt-2 pt-2 border-t border-indigo-100/50">
+                                                            <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest">Recommendation</p>
+                                                            <p className="text-xs font-bold text-gray-600 italic">{resp.recommendation}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
                                         </div>
                                     )}
 
