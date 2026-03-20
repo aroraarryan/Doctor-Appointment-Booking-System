@@ -444,6 +444,84 @@ const getNoShows = async (req, res) => {
        }
 };
 
+// GET /api/admin/revenue-stats
+const getRevenueStats = async (req, res) => {
+        try {
+                // 1. Get Commission Revenue (Platform fees from bookings)
+                const { data: earnings, error: earningsError } = await supabase
+                        .from('doctor_earnings')
+                        .select('platform_fee_amount');
+                
+                if (earningsError) throw earningsError;
+                const commissionRevenue = earnings.reduce((sum, e) => sum + parseFloat(e.platform_fee_amount || 0), 0);
+
+                // 2. Get Subscription Revenue
+                const { data: subs, error: subsError } = await supabase
+                        .from('doctor_subscriptions')
+                        .select('plan:subscription_plans(price_monthly)')
+                        .eq('status', 'active');
+                
+                if (subsError) throw subsError;
+                const subscriptionRevenue = subs.reduce((sum, s) => sum + parseFloat(s.plan.price_monthly || 0), 0);
+
+                // 3. Recent Transactions
+                const { data: recentPayments, error: payError } = await supabase
+                        .from('payments')
+                        .select(`
+                                id,
+                                amount,
+                                created_at,
+                                status,
+                                doctor:profiles!doctor_id(name)
+                        `)
+                        .order('created_at', { ascending: false })
+                        .limit(10);
+                
+                if (payError) throw payError;
+
+                const { data: recentSubs, error: subTxError } = await supabase
+                        .from('doctor_subscriptions')
+                        .select(`
+                                id,
+                                created_at,
+                                status,
+                                doctor:profiles!doctor_id(name),
+                                plan:subscription_plans(name, price_monthly)
+                        `)
+                        .order('created_at', { ascending: false })
+                        .limit(5);
+
+                const recentTransactions = [
+                        ...recentPayments.map(p => ({
+                                id: p.id,
+                                type: 'booking',
+                                amount: parseFloat(p.amount),
+                                platform_fee: parseFloat(p.amount) * 0.1,
+                                created_at: p.created_at,
+                                doctor_name: p.doctor?.name
+                        })),
+                        ...recentSubs.map(s => ({
+                                id: s.id,
+                                type: 'subscription',
+                                amount: parseFloat(s.plan.price_monthly),
+                                platform_fee: parseFloat(s.plan.price_monthly),
+                                created_at: s.created_at,
+                                doctor_name: s.doctor?.name
+                        }))
+                ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+                res.status(200).json({
+                        total_platform_revenue: commissionRevenue + subscriptionRevenue,
+                        subscription_revenue: subscriptionRevenue,
+                        commission_revenue: commissionRevenue,
+                        recent_transactions: recentTransactions.slice(0, 15)
+                });
+        } catch (error) {
+                console.error('Revenue Stats Error:', error);
+                res.status(500).json({ error: error.message });
+        }
+};
+
 module.exports = {
        getStats,
        getAppointmentsByDay,
@@ -459,5 +537,6 @@ module.exports = {
        removeFeaturedDoctor,
        getVerifications,
        updateVerificationStatus,
-       getNoShows
+       getNoShows,
+       getRevenueStats
 };

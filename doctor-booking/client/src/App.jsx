@@ -24,6 +24,11 @@ import SecondOpinion from './pages/SecondOpinion';
 import SecondOpinionRequests from './pages/SecondOpinionRequests';
 import HealthDashboard from './pages/HealthDashboard';
 import Announcements from './pages/Announcements';
+import PatientAnalytics from './pages/PatientAnalytics';
+import DoctorAnalytics from './pages/DoctorAnalytics';
+import DoctorSubscription from './pages/DoctorSubscription';
+import EarningsDashboard from './pages/EarningsDashboard';
+import Invoices from './pages/Invoices';
 import NotFound from './pages/NotFound';
 import AnnouncementBanner from './components/AnnouncementBanner';
 
@@ -108,6 +113,31 @@ function App() {
                                                   <Route path="/announcements" element={
                                                          <PrivateRoute>
                                                                 <Announcements />
+                                                         </PrivateRoute>
+                                                  } />
+                                                  <Route path="/analytics" element={
+                                                         <PrivateRoute>
+                                                                <RoleRoute allowedRoles={['patient']}><PatientAnalytics /></RoleRoute>
+                                                         </PrivateRoute>
+                                                  } />
+                                                  <Route path="/doctor/analytics" element={
+                                                         <PrivateRoute>
+                                                                <RoleRoute allowedRoles={['doctor']}><DoctorAnalytics /></RoleRoute>
+                                                         </PrivateRoute>
+                                                  } />
+                                                  <Route path="/doctor/subscription" element={
+                                                         <PrivateRoute>
+                                                                <RoleRoute allowedRoles={['doctor']}><DoctorSubscription /></RoleRoute>
+                                                         </PrivateRoute>
+                                                  } />
+                                                  <Route path="/doctor/earnings" element={
+                                                         <PrivateRoute>
+                                                                <RoleRoute allowedRoles={['doctor']}><EarningsDashboard /></RoleRoute>
+                                                         </PrivateRoute>
+                                                  } />
+                                                  <Route path="/invoices" element={
+                                                         <PrivateRoute>
+                                                                <Invoices />
                                                          </PrivateRoute>
                                                   } />
                                                  <Route path="*" element={<NotFound />} />

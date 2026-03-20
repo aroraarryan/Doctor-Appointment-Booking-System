@@ -51,6 +51,12 @@ const healthMetricsRoutes = require('./routes/healthMetrics');
 const medicineReminderRoutes = require('./routes/medicineReminders');
 const symptomCheckerRoutes = require('./routes/symptomChecker');
 const announcementRoutes = require('./routes/announcementRoutes');
+const analyticsRoutes = require('./routes/analytics');
+const subscriptionRoutes = require('./routes/subscriptions');
+const couponRoutes = require('./routes/coupons');
+const insuranceRoutes = require('./routes/insurance');
+const earningsRoutes = require('./routes/earnings');
+const invoiceRoutes = require('./routes/invoices');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
@@ -74,6 +80,12 @@ app.use('/api/health-metrics', healthMetricsRoutes);
 app.use('/api/medicine-reminders', medicineReminderRoutes);
 app.use('/api/symptom-checker', symptomCheckerRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/coupons', couponRoutes);
+app.use('/api/insurance', insuranceRoutes);
+app.use('/api/earnings', earningsRoutes);
+app.use('/api/invoices', invoiceRoutes);
 
 app.get('/api/health', (req, res) => {
        res.status(200).json({ status: "OK", timestamp: new Date() });

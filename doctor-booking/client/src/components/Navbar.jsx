@@ -52,19 +52,29 @@ const Navbar = () => {
                                                   {user && user.role === 'patient' && (
                                                          <>
                                                                 <Link to="/messages" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Messages</Link>
+                                                                <Link to="/invoices" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Invoices</Link>
                                                                 <Link to="/payments/history" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Payments</Link>
                                                                 <Link to="/prescriptions" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Prescriptions</Link>
                                                                 <Link to="/medical-history" className="text-gray-600 hover:text-indigo-600 font-semibold transition">History</Link>
                                                                 <Link to="/second-opinion" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Opinion</Link>
+                                                                <Link to="/analytics" className="text-gray-600 hover:text-indigo-600 font-semibold transition font-black text-indigo-500">Analytics</Link>
                                                          </>
                                                   )}
                                                   {user && user.role !== 'patient' && (
                                                          <>
                                                                 {user.role === 'doctor' && (
-                                                                       <Link to="/doctor/second-opinion-requests" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Opinions</Link>
+                                                                       <>
+                                                                              <Link to="/doctor/subscription" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Subscription</Link>
+                                                                              <Link to="/doctor/earnings" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Earnings</Link>
+                                                                              <Link to="/doctor/second-opinion-requests" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Opinions</Link>
+                                                                       </>
                                                                 )}
                                                                 <Link to="/messages" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Messages</Link>
+                                                                <Link to="/invoices" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Invoices</Link>
                                                                 <Link to="/payments/history" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Payments</Link>
+                                                                {user.role === 'doctor' && (
+                                                                       <Link to="/doctor/analytics" className="text-gray-600 hover:text-indigo-600 font-semibold transition font-black text-indigo-500 underline decoration-2 underline-offset-4">Insights</Link>
+                                                                )}
                                                          </>
                                                   )}
                                           </div>
@@ -139,7 +149,9 @@ const Navbar = () => {
                                                   {user.role === 'patient' && <Link to="/prescriptions" onClick={() => setShowMobileMenu(false)} className="block text-gray-600 font-bold py-2">Prescriptions</Link>}
                                                   {user.role === 'patient' && <Link to="/medical-history" onClick={() => setShowMobileMenu(false)} className="block text-gray-600 font-bold py-2">Medical History</Link>}
                                                   {user.role === 'patient' && <Link to="/second-opinion" onClick={() => setShowMobileMenu(false)} className="block text-gray-600 font-bold py-2">Second Opinion</Link>}
+                                                  {user.role === 'patient' && <Link to="/analytics" onClick={() => setShowMobileMenu(false)} className="block text-indigo-600 font-black py-2">My Analytics</Link>}
                                                   {user.role === 'doctor' && <Link to="/doctor/second-opinion-requests" onClick={() => setShowMobileMenu(false)} className="block text-gray-600 font-bold py-2">Opinions</Link>}
+                                                  {user.role === 'doctor' && <Link to="/doctor/analytics" onClick={() => setShowMobileMenu(false)} className="block text-indigo-600 font-black py-2">Practice Insights</Link>}
                                                   <Link to={user.role === 'admin' ? '/admin/dashboard' : user.role === 'doctor' ? '/doctor/dashboard' : '/dashboard'} onClick={() => setShowMobileMenu(false)} className="block text-gray-600 font-bold py-2">Dashboard</Link>
                                                  <button onClick={logout} className="w-full text-left text-red-600 font-bold py-2">Logout</button>
                                           </>

@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const https = require('https');
 const supabase = require('../config/supabase');
 const { createNotification } = require('../utils/notifications');
+const { generateInvoice } = require('../utils/invoiceGenerator');
 
 const razorpay = new Razorpay({
        key_id: process.env.RAZORPAY_KEY_ID,
@@ -11,7 +12,7 @@ const razorpay = new Razorpay({
 
 // POST /api/payments/create-order
 const createOrder = async (req, res) => {
-       const { appointmentId } = req.body;
+       const { appointmentId, couponCode, insuranceProvider, policyNumber, insuranceAmount = 0 } = req.body;
        const patientId = req.user.id;
 
        try {
@@ -19,13 +20,13 @@ const createOrder = async (req, res) => {
               const { data: appointment, error: apptError } = await supabase
                      .from('appointments')
                      .select(`
-                 *,
-                 doctor:doctors (
-                     id,
-                     fees,
-                     profile:profiles (name)
-                 )
-             `)
+                  *,
+                  doctor:doctors (
+                      id,
+                      fees,
+                      profile:profiles (name, specialty)
+                  )
+              `)
                      .eq('id', appointmentId)
                      .single();
 
@@ -34,45 +35,100 @@ const createOrder = async (req, res) => {
               }
 
               const doctorId = appointment.doctor_id;
-              const amount = appointment.fees ?? appointment.doctor.fees;
-              const doctorName = appointment.doctor.profile.name;
+              let originalAmount = appointment.fees ?? appointment.doctor.fees;
+              let discount = 0;
+              let finalAmount = originalAmount;
+              let couponId = null;
 
-              // 2. Create Razorpay order
+               // 2. Validate Coupon if provided
+               if (couponCode) {
+                      const { data: coupon, error: couponError } = await supabase
+                             .from('coupons')
+                             .select('*')
+                             .eq('code', couponCode)
+                             .eq('is_active', true)
+                             .single();
+
+                      if (coupon && !couponError) {
+                             // Basic rules check
+                             const now = new Date();
+                             const isValid = (!coupon.valid_from || new Date(coupon.valid_from) <= now) &&
+                                            (!coupon.valid_until || new Date(coupon.valid_until) >= now) &&
+                                            (!coupon.usage_limit || coupon.used_count < coupon.usage_limit) &&
+                                            (coupon.applicable_to !== 'specific_doctor' || coupon.doctor_id === doctorId);
+
+                             if (isValid) {
+                                    if (coupon.discount_type === 'percentage') {
+                                           discount = (originalAmount * coupon.discount_value) / 100;
+                                           if (coupon.max_discount_amount) {
+                                                discount = Math.min(discount, coupon.max_discount_amount);
+                                           }
+                                    } else {
+                                           discount = Math.min(coupon.discount_value, originalAmount);
+                                    }
+                                    couponId = coupon.id;
+                                    finalAmount -= discount;
+                             }
+                      }
+               }
+
+              // 3. Apply Insurance
+              finalAmount -= insuranceAmount;
+              finalAmount = Math.max(finalAmount, 0); // Ensure not negative
+
+              // 4. Create Razorpay order
               const options = {
-                     amount: Math.round(amount * 100), // amount in paise
+                     amount: Math.round(finalAmount * 100), // amount in paise
                      currency: 'INR',
                      receipt: appointmentId,
-                     payment_capture: 1, // Auto-capture payments
+                     payment_capture: 1,
                      notes: {
                             appointmentId,
                             patientId,
-                            doctorId
+                            doctorId,
+                            couponCode,
+                            insuranceProvider,
+                            insuranceAmount
                      }
               };
 
               const order = await razorpay.orders.create(options);
 
-              // 3. Insert pending payment record
-              const { error: payError } = await supabase
+              // 5. Insert pending payment record
+              const { data: payment, error: payError } = await supabase
                      .from('payments')
                      .insert([{
                             appointment_id: appointmentId,
                             patient_id: patientId,
                             doctor_id: doctorId,
-                            amount: amount,
+                            amount: finalAmount,
                             currency: 'INR',
                             razorpay_order_id: order.id,
                             status: 'pending'
-                     }]);
+                     }])
+                     .select()
+                     .single();
 
               if (payError) throw payError;
+
+              // 6. Record Insurance Claim if applicable (pre-emptive or link after payment)
+              if (insuranceProvider && policyNumber) {
+                     await supabase.from('insurance_claims').insert({
+                            patient_id: patientId,
+                            appointment_id: appointmentId,
+                            payment_id: payment.id,
+                            insurance_provider: insuranceProvider,
+                            policy_number: policyNumber,
+                            covered_amount: insuranceAmount,
+                            patient_amount: finalAmount
+                     });
+              }
 
               res.status(200).json({
                      orderId: order.id,
                      amount: order.amount,
                      currency: order.currency,
-                     doctorName,
-                     appointmentDate: appointment.appointment_date,
+                     doctorName: appointment.doctor.profile.name,
                      keyId: process.env.RAZORPAY_KEY_ID
               });
 
@@ -94,60 +150,106 @@ const verifyPayment = async (req, res) => {
                      .update(body.toString())
                      .digest('hex');
 
-              const isValid = expectedSignature === razorpay_signature;
-
-              if (isValid) {
-                     // 2. Update payment status
-                     const { data: payment, error: payUpdateError } = await supabase
-                            .from('payments')
-                            .update({
-                                   status: 'paid',
-                                   razorpay_payment_id,
-                                   razorpay_signature
-                            })
-                            .eq('razorpay_order_id', razorpay_order_id)
-                            .select()
-                            .single();
-
-                     if (payUpdateError) throw payUpdateError;
-
-                     // 3. Update appointment status
-                     const { error: apptUpdateError } = await supabase
-                            .from('appointments')
-                            .update({
-                                   status: 'confirmed',
-                                   payment_status: 'paid'
-                            })
-                            .eq('id', appointmentId);
-
-                     if (apptUpdateError) throw apptUpdateError;
-
-                     // 4. Create notifications
-                     await createNotification(
-                            payment.patient_id,
-                            'Payment Successful',
-                            `Your payment for appointment with Dr. ${payment.doctor_id} has been confirmed.`,
-                            'payment_received',
-                            appointmentId
-                     );
-
-                     await createNotification(
-                            payment.doctor_id,
-                            'New Appointment Confirmed',
-                            `A new appointment has been confirmed and paid for by a patient.`,
-                            'payment_received',
-                            appointmentId
-                     );
-
-                     res.status(200).json({ success: true, message: 'Payment verified and appointment confirmed' });
-              } else {
-                     await supabase
-                            .from('payments')
-                            .update({ status: 'failed' })
-                            .eq('razorpay_order_id', razorpay_order_id);
-
-                     res.status(400).json({ success: false, message: 'Payment verification failed' });
+              if (expectedSignature !== razorpay_signature) {
+                     await supabase.from('payments').update({ status: 'failed' }).eq('razorpay_order_id', razorpay_order_id);
+                     return res.status(400).json({ success: false, message: 'Payment verification failed' });
               }
+
+              // 2. Update payment status
+              const { data: payment, error: payUpdateError } = await supabase
+                     .from('payments')
+                     .update({
+                            status: 'paid',
+                            razorpay_payment_id,
+                            razorpay_signature
+                     })
+                     .eq('razorpay_order_id', razorpay_order_id)
+                     .select(`
+                *,
+                patient:profiles!patient_id (name, email),
+                doctor:doctors (
+                    id,
+                    specialty,
+                    profile:profiles (name)
+                ),
+                appointment:appointments (*)
+            `)
+                     .single();
+
+              if (payUpdateError) throw payUpdateError;
+
+              // 3. Update appointment status
+              await supabase
+                     .from('appointments')
+                     .update({ status: 'confirmed', payment_status: 'paid' })
+                     .eq('id', appointmentId);
+
+              // 4. Calculate Earnings (Net = Gross - 10% Platform Fee)
+              const platformFee = payment.amount * 0.10;
+              const netAmount = payment.amount - platformFee;
+
+              await supabase.from('doctor_earnings').insert({
+                     doctor_id: payment.doctor_id,
+                     payment_id: payment.id,
+                     gross_amount: payment.amount,
+                     platform_fee_amount: platformFee,
+                     net_amount: netAmount,
+                     status: 'pending'
+              });
+
+              // 5. Generate Invoice & Upload to Storage
+              const invoiceNum = `INV-${Date.now()}`;
+              const { data: claim } = await supabase.from('insurance_claims').select('*').eq('payment_id', payment.id).maybeSingle();
+              
+              const invoiceData = {
+                     invoice_number: invoiceNum,
+                     issued_at: new Date().toISOString(),
+                     doctor_name: payment.doctor.profile.name,
+                     doctor_specialty: payment.doctor.specialty,
+                     patient_name: payment.patient.name,
+                     patient_email: payment.patient.email,
+                     subtotal: payment.appointment.fees || payment.amount,
+                     discount_amount: 0, // In a real app, track this in payments table
+                     insurance_covered: claim ? claim.covered_amount : 0,
+                     insurance_provider: claim ? claim.insurance_provider : '',
+                     tax_amount: payment.amount * 0.18, // Simplified
+                     total_amount: payment.amount,
+                     razorpay_payment_id,
+                     status: 'paid',
+                     appointment_date: payment.appointment.appointment_date,
+                     appointment_time: payment.appointment.time_slot
+              };
+
+              const pdfBuffer = await generateInvoice(invoiceData);
+              const fileName = `invoices/${invoiceNum}.pdf`;
+              
+              const { error: uploadError } = await supabase.storage
+                     .from('medical-records') // Reuse bucket or specify new one
+                     .upload(fileName, pdfBuffer, { contentType: 'application/pdf' });
+
+              if (!uploadError) {
+                     const { data: { publicUrl } } = supabase.storage.from('medical-records').getPublicUrl(fileName);
+                     
+                     await supabase.from('invoices').insert({
+                            invoice_number: invoiceNum,
+                            appointment_id: appointmentId,
+                            payment_id: payment.id,
+                            patient_id: payment.patient_id,
+                            doctor_id: payment.doctor_id,
+                            subtotal: invoiceData.subtotal,
+                            total_amount: payment.amount,
+                            tax_amount: invoiceData.tax_amount,
+                            pdf_url: publicUrl,
+                            status: 'paid'
+                     });
+              }
+
+              // 6. Notifications
+              await createNotification(payment.patient_id, 'Payment Successful', `Invoice ${invoiceNum} generated.`, 'payment_received', appointmentId);
+              await createNotification(payment.doctor_id, 'New Appointment Confirmed', `Earnings updated.`, 'payment_received', appointmentId);
+
+              res.status(200).json({ success: true, message: 'Payment verified, invoice generated, and earnings recorded' });
+              
        } catch (error) {
               console.error('Verify Payment Error:', error);
               res.status(500).json({ error: error.message });

@@ -27,5 +27,6 @@ router.post('/featured', adminController.addFeaturedDoctor);
 router.delete('/featured/:id', adminController.removeFeaturedDoctor);
 
 router.get('/no-shows', adminController.getNoShows);
+router.get('/revenue-stats', adminController.getRevenueStats);
 
 module.exports = router;

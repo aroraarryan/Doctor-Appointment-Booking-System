@@ -27,6 +27,10 @@ const DoctorProfile = () => {
        const [showWaitlistModal, setShowWaitlistModal] = useState(false);
        const [waitlistNotes, setWaitlistNotes] = useState('');
        const [isUrgent, setIsUrgent] = useState(false);
+       const [couponCode, setCouponCode] = useState('');
+       const [insurancePolicy, setInsurancePolicy] = useState('');
+       const [appliedCoupon, setAppliedCoupon] = useState(null);
+       const [validatingCoupon, setValidatingCoupon] = useState(false);
 
        useEffect(() => {
               const fetchDoctorData = async () => {
@@ -97,7 +101,9 @@ const DoctorProfile = () => {
                      // 3. Create order on backend (Total for all sessions if recurring)
                      const { data: orderData } = await api.post('/payments/create-order', { 
                             appointmentId: firstAppointmentId,
-                            allRecurring: isRecurring // Signal backend to charge for all
+                            allRecurring: isRecurring,
+                            couponCode: couponCode || null,
+                            insurancePolicy: insurancePolicy || null
                      });
 
                      // 4. Open Razorpay checkout
@@ -204,14 +210,20 @@ const DoctorProfile = () => {
                                                  doctor.name.charAt(0)
                                           )}
                                    </div>
-                                   {doctor.is_verified && (
-                                          <div className="absolute -bottom-4 -right-4 bg-blue-500 text-white p-2 rounded-2xl shadow-xl border-4 border-white flex items-center gap-1" title="Verified Specialist">
-                                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
-                                                 </svg>
-                                                 <span className="text-xs font-bold pr-1">VERIFIED</span>
-                                          </div>
-                                   )}
+                                    {doctor.is_verified && (
+                                           <div className={`absolute -bottom-4 -right-4 text-white p-2 rounded-2xl shadow-xl border-4 border-white flex items-center gap-1 ${
+                                               doctor.doctor_subscriptions?.find(s => s.status === 'active')?.plan?.badge_type === 'platinum' ? 'bg-indigo-600' :
+                                               doctor.doctor_subscriptions?.find(s => s.status === 'active')?.plan?.badge_type === 'gold' ? 'bg-yellow-500' :
+                                               'bg-blue-500'
+                                           }`} title="Verified Specialist">
+                                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                         <path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745a3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
+                                                  </svg>
+                                                  <span className="text-[10px] font-black pr-1 uppercase">
+                                                      {doctor.doctor_subscriptions?.find(s => s.status === 'active')?.plan?.badge_type || 'VERIFIED'}
+                                                  </span>
+                                           </div>
+                                    )}
                             </div>
 
                             <div className="flex-1 space-y-6 relative z-10">
@@ -451,7 +463,7 @@ const DoctorProfile = () => {
                                           <h3 className="text-2xl font-extrabold text-gray-900 mb-2">Confirm Booking?</h3>
                                           <p className="text-gray-500 text-sm mb-6">Please review your appointment details before proceeding to payment.</p>
                                           
-                                          <div className="space-y-4 bg-gray-50 p-6 rounded-2xl border border-gray-100 mb-8">
+                                          <div className="space-y-4 bg-gray-50 p-6 rounded-2xl border border-gray-100 mb-6">
                                                  <div className="flex justify-between items-center text-sm">
                                                         <span className="text-gray-400 font-bold uppercase tracking-wider text-[10px]">Date</span>
                                                         <span className="text-gray-900 font-bold">{selectedDate}</span>
@@ -467,10 +479,57 @@ const DoctorProfile = () => {
                                                         </div>
                                                  )}
                                                  <div className="flex justify-between items-center text-sm pt-4 border-t border-gray-200">
-                                                        <span className="text-gray-400 font-bold uppercase tracking-wider text-[10px]">Total Fee</span>
-                                                        <span className="text-gray-900 font-extrabold text-lg">₹{isRecurring ? doctor.fees * recurrenceCount : doctor.fees}</span>
+                                                        <span className="text-gray-400 font-bold uppercase tracking-wider text-[10px]">Base Fee</span>
+                                                        <span className="text-gray-900 font-bold text-base">₹{isRecurring ? doctor.fees * recurrenceCount : doctor.fees}</span>
                                                  </div>
                                           </div>
+
+                                           <div className="space-y-3 mb-8">
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Have a Coupon?</label>
+                                                    <div className="flex gap-2">
+                                                        <input 
+                                                            type="text" 
+                                                            placeholder="CODE123" 
+                                                            value={couponCode}
+                                                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                                            className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-bold"
+                                                        />
+                                                        <button 
+                                                            onClick={async () => {
+                                                                if (!couponCode) return;
+                                                                setValidatingCoupon(true);
+                                                                try {
+                                                                    const { data } = await api.get(`/coupons/validate?code=${couponCode}&doctorId=${id}&amount=${doctor.fees}`);
+                                                                    setAppliedCoupon(data);
+                                                                    toast.success('Coupon applied!');
+                                                                } catch (err) {
+                                                                    toast.error(err.response?.data?.error || 'Invalid coupon');
+                                                                    setAppliedCoupon(null);
+                                                                } finally {
+                                                                    setValidatingCoupon(false);
+                                                                }
+                                                            }}
+                                                            disabled={validatingCoupon}
+                                                            className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-all border border-indigo-200"
+                                                        >
+                                                            {validatingCoupon ? '...' : 'Apply'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Insurance ID (Optional)</label>
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="POL-000-XX" 
+                                                        value={insurancePolicy}
+                                                        onChange={(e) => setInsurancePolicy(e.target.value)}
+                                                        className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
+                                                    />
+                                                    <p className="text-[9px] text-gray-400 mt-1 ml-1 leading-tight">We will process your claim automatically after the consultation.</p>
+                                                </div>
+                                           </div>
 
                                           <div className="flex flex-col gap-3">
                                                  <button

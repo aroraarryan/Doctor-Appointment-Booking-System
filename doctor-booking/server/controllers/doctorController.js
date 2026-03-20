@@ -25,7 +25,11 @@ const getDoctors = async (req, res) => {
                 id, name, email, avatar_url, role,
                 doctors!inner (
                     specialty, experience, fees, bio, is_approved, rating, total_reviews, 
-                    is_verified, verification_badge, city, state, featured_until, latitude, longitude
+                    is_verified, verification_badge, city, state, featured_until, latitude, longitude,
+                    doctor_subscriptions (
+                        status,
+                        plan:subscription_plans (badge_type, priority_listing)
+                    )
                 )
             `)
                      .eq('role', 'doctor')
@@ -198,7 +202,11 @@ const getDoctorById = async (req, res) => {
                 doctors (
                     specialty, experience, fees, bio, is_approved, rating, total_reviews, 
                     is_verified, verification_badge, city, state, featured_until, latitude, longitude,
-                    buffer_time_mins, cancellation_policy_hours
+                    buffer_time_mins, cancellation_policy_hours,
+                    doctor_subscriptions (
+                        status,
+                        plan:subscription_plans (badge_type, priority_listing)
+                    )
                 )
             `)
                      .eq('id', id)
