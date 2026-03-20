@@ -23,7 +23,9 @@ import MedicalHistory from './pages/MedicalHistory';
 import SecondOpinion from './pages/SecondOpinion';
 import SecondOpinionRequests from './pages/SecondOpinionRequests';
 import HealthDashboard from './pages/HealthDashboard';
+import Announcements from './pages/Announcements';
 import NotFound from './pages/NotFound';
+import AnnouncementBanner from './components/AnnouncementBanner';
 
 function App() {
        return (
@@ -32,6 +34,7 @@ function App() {
                      <RealtimeProvider>
                             <div className="min-h-screen bg-gray-50">
                                    <Navbar />
+                                   <AnnouncementBanner />
                                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                                           <Routes>
                                                  <Route path="/" element={<Home />} />
@@ -100,6 +103,11 @@ function App() {
                                                   <Route path="/doctor/second-opinion-requests" element={
                                                          <PrivateRoute>
                                                                 <RoleRoute allowedRoles={['doctor']}><SecondOpinionRequests /></RoleRoute>
+                                                         </PrivateRoute>
+                                                  } />
+                                                  <Route path="/announcements" element={
+                                                         <PrivateRoute>
+                                                                <Announcements />
                                                          </PrivateRoute>
                                                   } />
                                                  <Route path="*" element={<NotFound />} />

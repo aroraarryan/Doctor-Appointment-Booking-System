@@ -83,10 +83,10 @@ const getMessages = async (req, res) => {
 
 // POST /api/messages - send a message
 const sendMessage = async (req, res) => {
-       const { conversationId, content } = req.body;
+       const { conversationId, content, message_type = 'text', file_duration_secs } = req.body;
 
-       if (!conversationId || !content) {
-              return res.status(400).json({ error: 'Conversation ID and content are required' });
+       if (!conversationId || (!content && !req.file)) {
+              return res.status(400).json({ error: 'Conversation ID and content/file are required' });
        }
 
        try {
@@ -105,40 +105,138 @@ const sendMessage = async (req, res) => {
               }
 
               const receiverId = conversation.patient_id === req.user.id ? conversation.doctor_id : conversation.patient_id;
+              let fileUrl = null;
+              let finalContent = content;
 
-              // 2. Insert message
+              // 2. Handle file upload for voice messages (via multer req.file)
+              if (message_type === 'voice' && req.file) {
+                     const ext = req.file.originalname.split('.').pop() || 'webm';
+                     const fileName = `${conversationId}/${Date.now()}.${ext}`;
+                     
+                     const { data: uploadData, error: uploadError } = await supabase.storage
+                            .from('voice-messages')
+                            .upload(fileName, req.file.buffer, { contentType: req.file.mimetype || 'audio/webm' });
+
+                     if (uploadError) throw uploadError;
+                     
+                     const { data: { publicUrl } } = supabase.storage
+                            .from('voice-messages')
+                            .getPublicUrl(fileName);
+                     
+                     fileUrl = publicUrl;
+                     finalContent = "🎤 Voice message";
+              }
+
+              // 3. Handle file upload for image messages (via multer req.file)
+              if (message_type === 'image' && req.file) {
+                     const ext = req.file.originalname.split('.').pop() || 'png';
+                     const fileName = `${conversationId}/${Date.now()}.${ext}`;
+                     
+                     const { data: uploadData, error: uploadError } = await supabase.storage
+                            .from('chat-images')
+                            .upload(fileName, req.file.buffer, { contentType: req.file.mimetype || 'image/png' });
+
+                     if (uploadError) throw uploadError;
+                     
+                     const { data: { publicUrl } } = supabase.storage
+                            .from('chat-images')
+                            .getPublicUrl(fileName);
+                     
+                     fileUrl = publicUrl;
+                     finalContent = "📷 Image";
+              }
+
+              // 3. Insert message
               const { data: message, error: msgError } = await supabase
                      .from('messages')
                      .insert([{
                             conversation_id: conversationId,
                             sender_id: req.user.id,
                             receiver_id: receiverId,
-                            content
+                            content: finalContent,
+                            message_type,
+                            file_url: fileUrl,
+                            file_duration_secs,
+                            delivered_at: new Date()
                      }])
                      .select()
                      .single();
 
               if (msgError) throw msgError;
 
-              // 3. Update conversation last message
+              // 4. Update conversation (last message, unread counts)
+              const isPatientSender = req.user.id === conversation.patient_id;
+              const updateData = {
+                     last_message: finalContent,
+                     last_message_at: new Date(),
+                     [isPatientSender ? 'doctor_unread_count' : 'patient_unread_count']: (isPatientSender ? conversation.doctor_unread_count : conversation.patient_unread_count) + 1
+              };
+
               await supabase
                      .from('conversations')
-                     .update({
-                            last_message: content,
-                            last_message_at: new Date()
-                     })
+                     .update(updateData)
                      .eq('id', conversationId);
 
-              // 4. Create notification for receiver
+              // 5. Update doctor avg response time if applicable
+              if (!isPatientSender) {
+                     const { data: avgMins, error: funcError } = await supabase
+                            .rpc('calculate_avg_response_time', { doctor_id_param: req.user.id });
+                     
+                     if (!funcError && avgMins !== null) {
+                            await supabase
+                                   .from('conversations')
+                                   .update({ doctor_avg_response_mins: avgMins })
+                                   .eq('id', conversationId);
+                     }
+              }
+
+              // 6. Create notification for receiver
               await createNotification(
                      receiverId,
                      'New Message',
-                     content.substring(0, 50) + (content.length > 50 ? '...' : ''),
+                     finalContent.substring(0, 50) + (finalContent.length > 50 ? '...' : ''),
                      'new_message',
                      conversationId
               );
 
               res.status(201).json(message);
+       } catch (error) {
+              console.error('sendMessage Error:', error);
+              res.status(400).json({ error: error.message });
+       }
+};
+
+// PATCH /api/messages/read/:conversationId
+const markMessagesAsRead = async (req, res) => {
+       const { conversationId } = req.params;
+       try {
+              // 1. Mark messages as read
+              const { data, error, count } = await supabase
+                     .from('messages')
+                     .update({ read_at: new Date(), is_read: true })
+                     .eq('conversation_id', conversationId)
+                     .eq('receiver_id', req.user.id)
+                     .is('read_at', null)
+                     .select('*', { count: 'exact' });
+
+              if (error) throw error;
+
+              // 2. Reset unread count for current user
+              const { data: conversation, error: convError } = await supabase
+                     .from('conversations')
+                     .select('*')
+                     .eq('id', conversationId)
+                     .single();
+              
+              if (convError) throw convError;
+
+              const isPatient = req.user.id === conversation.patient_id;
+              await supabase
+                     .from('conversations')
+                     .update({ [isPatient ? 'patient_unread_count' : 'doctor_unread_count']: 0 })
+                     .eq('id', conversationId);
+
+              res.status(200).json({ read_count: count });
        } catch (error) {
               res.status(400).json({ error: error.message });
        }
@@ -150,26 +248,43 @@ const getConversations = async (req, res) => {
               const { data, error } = await supabase
                      .from('conversations')
                      .select(`
-        *,
-        patient:profiles!patient_id (id, name, avatar_url),
-        doctor:profiles!doctor_id (id, name, avatar_url)
-      `)
+                        *,
+                        patient:profiles!patient_id (id, name, avatar_url),
+                        doctor:profiles!doctor_id (id, name, avatar_url)
+                      `)
                      .or(`patient_id.eq.${req.user.id},doctor_id.eq.${req.user.id}`)
                      .order('last_message_at', { ascending: false, nullsFirst: false });
 
               if (error) throw error;
 
-              // Map to include the "other user" details consistently
-              const formattedConversations = data.map(conv => {
-                     const otherUser = conv.patient_id === req.user.id ? conv.doctor : conv.patient;
+              // Map to include the "other user" details consistently and unread counts
+              const formattedConversations = await Promise.all(data.map(async conv => {
+                     const isPatient = conv.patient_id === req.user.id;
+                     const otherUser = isPatient ? conv.doctor : conv.patient;
+                     
+                     // Fetch other user's last session for "last seen"
+                     const { data: session } = await supabase
+                            .from('user_sessions')
+                            .select('last_active_at')
+                            .eq('user_id', otherUser.id)
+                            .eq('is_active', true)
+                            .order('last_active_at', { ascending: false })
+                            .limit(1)
+                            .maybeSingle();
+
                      return {
                             ...conv,
-                            otherUser
+                            otherUser: {
+                                   ...otherUser,
+                                   last_active_at: session?.last_active_at
+                            },
+                            unreadCount: isPatient ? conv.patient_unread_count : conv.doctor_unread_count
                      };
-              });
+              }));
 
               res.status(200).json(formattedConversations);
        } catch (error) {
+              console.error('getConversations Error:', error);
               res.status(400).json({ error: error.message });
        }
 };
@@ -178,5 +293,6 @@ module.exports = {
        getOrCreateConversation,
        getMessages,
        sendMessage,
-       getConversations
+       getConversations,
+       markMessagesAsRead
 };

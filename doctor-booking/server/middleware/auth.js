@@ -79,5 +79,6 @@ const requireRole = (role) => {
 
 const isPatient = requireRole('patient');
 const isDoctor = requireRole('doctor');
+const isAdmin = requireRole('admin');
 
-module.exports = { verifyToken, requireRole, isPatient, isDoctor };
+module.exports = { verifyToken, requireRole, isPatient, isDoctor, isAdmin };

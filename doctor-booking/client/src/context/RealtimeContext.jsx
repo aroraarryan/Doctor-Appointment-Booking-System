@@ -11,6 +11,7 @@ export const RealtimeProvider = ({ children }) => {
        const [notifications, setNotifications] = useState([]);
        const [unreadCount, setUnreadCount] = useState(0);
        const [latestMessage, setLatestMessage] = useState(null);
+       const [latestConvUpdate, setLatestConvUpdate] = useState(null);
 
        const fetchNotifications = useCallback(async () => {
               if (!user) return;
@@ -85,26 +86,65 @@ export const RealtimeProvider = ({ children }) => {
                      )
                      .subscribe();
 
-              // Subscribe to messages for real-time chat updates
-              const messageChannel = supabase
-                     .channel(`public:messages:receiver_id=eq.${user.id}`)
+                      // Subscribe to messages for real-time chat updates (Insert & Update for read receipts)
+                      const messageChannel = supabase
+                             .channel(`public:messages:updates`)
+                             .on(
+                                    'postgres_changes',
+                                    {
+                                           event: '*', 
+                                           schema: 'public',
+                                           table: 'messages',
+                                           filter: `sender_id=eq.${user.id}` // Sender wants to see read receipts (updates)
+                                    },
+                                    (payload) => {
+                                           if (payload.eventType === 'UPDATE') {
+                                                  setLatestMessage({ ...payload.new, _isUpdate: true });
+                                           }
+                                    }
+                             )
+                             .on(
+                                    'postgres_changes',
+                                    {
+                                           event: '*',
+                                           schema: 'public',
+                                           table: 'messages',
+                                           filter: `receiver_id=eq.${user.id}` // Receiver wants to see new messages
+                                    },
+                                    (payload) => {
+                                           if (payload.eventType === 'INSERT') {
+                                                  setLatestMessage(payload.new);
+                                                  if (window.location.pathname !== '/messages') {
+                                                         toast('New message received!', {
+                                                                icon: '💬',
+                                                                duration: 4000
+                                                         });
+                                                  }
+                                           } else if (payload.eventType === 'UPDATE') {
+                                                  setLatestMessage({ ...payload.new, _isUpdate: true });
+                                           }
+                                    }
+                             )
+                             .subscribe();
+
+              // Subscribe to conversations for real-time unread counts and last message updates
+              const convChannel = supabase
+                     .channel(`public:conversations:user_id=eq.${user.id}`)
                      .on(
                             'postgres_changes',
                             {
-                                   event: 'INSERT',
+                                   event: 'UPDATE', // We mostly care about updates here
                                    schema: 'public',
-                                   table: 'messages',
-                                   filter: `receiver_id=eq.${user.id}`
+                                   table: 'conversations'
+                                   // Note: complex OR filters are tricky in JS client, 
+                                   // so we handle identification in the callback or use multiple channels
                             },
                             (payload) => {
-                                   setLatestMessage(payload.new);
-                                   if (window.location.pathname !== '/messages') {
-                                          toast('New message received!', {
-                                                 icon: '💬',
-                                                 duration: 4000
-                                          });
+                                   // Check if user is participant
+                                   if (payload.new.patient_id === user.id || payload.new.doctor_id === user.id) {
+                                          setLatestConvUpdate(payload.new);
+                                          console.log('Conversation update received:', payload.new);
                                    }
-                                   console.log('New message received:', payload.new);
                             }
                      )
                      .subscribe();
@@ -120,6 +160,7 @@ export const RealtimeProvider = ({ children }) => {
                      notifications,
                      unreadCount,
                      latestMessage,
+                     latestConvUpdate,
                      markAsRead,
                      markAllAsRead,
                      fetchNotifications

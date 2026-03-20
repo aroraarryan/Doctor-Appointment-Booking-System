@@ -20,6 +20,7 @@ const AdminDashboard = () => {
        const [verifications, setVerifications] = useState([]);
        const [featuredDoctors, setFeaturedDoctors] = useState([]);
        const [noShowAppointments, setNoShowAppointments] = useState([]);
+       const [announcements, setAnnouncements] = useState([]);
        const [loading, setLoading] = useState(true);
        const [page, setPage] = useState(1);
        const [totalPages, setTotalPages] = useState(1);
@@ -95,6 +96,15 @@ const AdminDashboard = () => {
                }
         };
 
+         const fetchAnnouncements = async () => {
+                try {
+                       const { data } = await api.get('/announcements');
+                       setAnnouncements(data);
+                } catch (error) {
+                       toast.error('Failed to fetch announcements');
+                }
+         };
+
 
        useEffect(() => {
               if (activeTab === 'doctors') {
@@ -108,8 +118,9 @@ const AdminDashboard = () => {
                       fetchFeatured();
                } else if (activeTab === 'no-shows') {
                       fetchNoShows();
-                     fetchFeatured();
-              }
+               } else if (activeTab === 'announcements') {
+                      fetchAnnouncements();
+               }
        }, [activeTab, page]);
 
        const handleApprove = async (id) => {
@@ -186,6 +197,32 @@ const AdminDashboard = () => {
               }
        };
 
+        const handleCreateAnnouncement = async (e) => {
+               e.preventDefault();
+               const formData = new FormData(e.target);
+               const data = Object.fromEntries(formData.entries());
+               
+               try {
+                      await api.post('/announcements', data);
+                      toast.success('Announcement created!');
+                      e.target.reset();
+                      fetchAnnouncements();
+               } catch (error) {
+                      toast.error('Failed to create announcement');
+               }
+        };
+
+        const handleDeleteAnnouncement = async (id) => {
+               if (!window.confirm('Delete this announcement?')) return;
+               try {
+                      await api.delete(`/announcements/${id}`);
+                      toast.success('Announcement deleted');
+                      fetchAnnouncements();
+               } catch (error) {
+                      toast.error('Failed to delete');
+               }
+        };
+
        const handleToggleSuspend = async (user) => {
               try {
                      const newStatus = !user.is_suspended;
@@ -206,7 +243,7 @@ const AdminDashboard = () => {
                      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                             <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Admin Control Panel</h1>
                             <div className="flex bg-gray-100 p-1 rounded-lg overflow-x-auto max-w-full">
-                                   {['overview', 'doctors', 'users', 'verifications', 'featured'].map(tab => (
+                                   {['overview', 'doctors', 'users', 'verifications', 'featured', 'no-shows', 'announcements'].map(tab => (
                                           <button
                                                  key={tab}
                                                  onClick={() => setActiveTab(tab)}
@@ -215,7 +252,7 @@ const AdminDashboard = () => {
                                                         : 'text-gray-500 hover:text-gray-700'
                                                         }`}
                                           >
-                                                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                                 {tab.replace('-', ' ').charAt(0).toUpperCase() + tab.replace('-', ' ').slice(1)}
                                           </button>
                                    ))}
                             </div>

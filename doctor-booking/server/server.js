@@ -50,6 +50,7 @@ const secondOpinionRoutes = require('./routes/secondOpinion');
 const healthMetricsRoutes = require('./routes/healthMetrics');
 const medicineReminderRoutes = require('./routes/medicineReminders');
 const symptomCheckerRoutes = require('./routes/symptomChecker');
+const announcementRoutes = require('./routes/announcementRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
@@ -72,6 +73,7 @@ app.use('/api/second-opinions', secondOpinionRoutes);
 app.use('/api/health-metrics', healthMetricsRoutes);
 app.use('/api/medicine-reminders', medicineReminderRoutes);
 app.use('/api/symptom-checker', symptomCheckerRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 app.get('/api/health', (req, res) => {
        res.status(200).json({ status: "OK", timestamp: new Date() });
