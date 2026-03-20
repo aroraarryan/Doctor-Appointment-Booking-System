@@ -9,6 +9,8 @@ const Navbar = () => {
        const { notifications, unreadCount, markAsRead, markAllAsRead } = useRealtime();
        const [showNotifications, setShowNotifications] = useState(false);
        const [showMobileMenu, setShowMobileMenu] = useState(false);
+       const [showSecondaryMenu, setShowSecondaryMenu] = useState(false);
+       const secondaryMenuRef = useRef(null);
        const dropdownRef = useRef(null);
        const navigate = useNavigate();
 
@@ -16,6 +18,9 @@ const Navbar = () => {
               const handleClickOutside = (event) => {
                      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                             setShowNotifications(false);
+                     }
+                     if (secondaryMenuRef.current && !secondaryMenuRef.current.contains(event.target)) {
+                            setShowSecondaryMenu(false);
                      }
               };
               document.addEventListener('mousedown', handleClickOutside);
@@ -47,37 +52,45 @@ const Navbar = () => {
                                           <Link to="/" className="text-2xl font-black text-indigo-600 tracking-tighter">
                                                  DocBook
                                           </Link>
-                                          <div className="hidden md:flex items-center space-x-6">
-                                                 <Link to="/doctors" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Find Doctors</Link>
-                                                  {user && user.role === 'patient' && (
-                                                         <>
-                                                                <Link to="/messages" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Messages</Link>
-                                                                <Link to="/invoices" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Invoices</Link>
-                                                                <Link to="/payments/history" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Payments</Link>
-                                                                <Link to="/prescriptions" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Prescriptions</Link>
-                                                                <Link to="/medical-history" className="text-gray-600 hover:text-indigo-600 font-semibold transition">History</Link>
-                                                                <Link to="/second-opinion" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Opinion</Link>
-                                                                <Link to="/analytics" className="text-gray-600 hover:text-indigo-600 font-semibold transition font-black text-indigo-500">Analytics</Link>
-                                                         </>
-                                                  )}
-                                                  {user && user.role !== 'patient' && (
-                                                         <>
-                                                                {user.role === 'doctor' && (
-                                                                       <>
-                                                                              <Link to="/doctor/subscription" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Subscription</Link>
-                                                                              <Link to="/doctor/earnings" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Earnings</Link>
-                                                                              <Link to="/doctor/second-opinion-requests" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Opinions</Link>
-                                                                       </>
+                                           <div className="hidden md:flex items-center space-x-6">
+                                                  <Link to="/doctors" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Find Doctors</Link>
+                                                  {user && (
+                                                         <div className="relative" ref={secondaryMenuRef}>
+                                                                <button
+                                                                       onClick={() => setShowSecondaryMenu(!showSecondaryMenu)}
+                                                                       className="flex items-center gap-1 text-gray-600 hover:text-indigo-600 font-semibold transition"
+                                                                >
+                                                                       {user.role === 'patient' ? 'My Health' : 'Practice Tools'}
+                                                                       <svg className={`h-4 w-4 transition-transform ${showSecondaryMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                                                                </button>
+                                                                {showSecondaryMenu && (
+                                                                       <div className="absolute left-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden ring-1 ring-black ring-opacity-5 z-50">
+                                                                              <div className="p-2 space-y-1">
+                                                                                     {user.role === 'patient' ? (
+                                                                                            <>
+                                                                                                   <Link to="/messages" onClick={() => setShowSecondaryMenu(false)} className="block px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition">Messages</Link>
+                                                                                                   <Link to="/prescriptions" onClick={() => setShowSecondaryMenu(false)} className="block px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition">Prescriptions</Link>
+                                                                                                   <Link to="/medical-history" onClick={() => setShowSecondaryMenu(false)} className="block px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition">Medical History</Link>
+                                                                                                   <Link to="/second-opinion" onClick={() => setShowSecondaryMenu(false)} className="block px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition">Second Opinion</Link>
+                                                                                                   <Link to="/payments/history" onClick={() => setShowSecondaryMenu(false)} className="block px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition">Payments & Billing</Link>
+                                                                                                   <Link to="/analytics" onClick={() => setShowSecondaryMenu(false)} className="block px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50/50 hover:bg-indigo-100 rounded-xl transition">Personal Analytics</Link>
+                                                                                            </>
+                                                                                     ) : (
+                                                                                            <>
+                                                                                                   <Link to="/messages" onClick={() => setShowSecondaryMenu(false)} className="block px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition">Messages</Link>
+                                                                                                   <Link to="/doctor/subscription" onClick={() => setShowSecondaryMenu(false)} className="block px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition">Subscription</Link>
+                                                                                                   <Link to="/doctor/earnings" onClick={() => setShowSecondaryMenu(false)} className="block px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition">Earnings Performance</Link>
+                                                                                                   <Link to="/doctor/second-opinion-requests" onClick={() => setShowSecondaryMenu(false)} className="block px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition">Opinion Requests</Link>
+                                                                                                   <Link to="/payments/history" onClick={() => setShowSecondaryMenu(false)} className="block px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition">Transactions</Link>
+                                                                                                   <Link to="/doctor/analytics" onClick={() => setShowSecondaryMenu(false)} className="block px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50/50 hover:bg-indigo-100 rounded-xl transition">Practice Insights</Link>
+                                                                                            </>
+                                                                                     )}
+                                                                              </div>
+                                                                       </div>
                                                                 )}
-                                                                <Link to="/messages" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Messages</Link>
-                                                                <Link to="/invoices" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Invoices</Link>
-                                                                <Link to="/payments/history" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Payments</Link>
-                                                                {user.role === 'doctor' && (
-                                                                       <Link to="/doctor/analytics" className="text-gray-600 hover:text-indigo-600 font-semibold transition font-black text-indigo-500 underline decoration-2 underline-offset-4">Insights</Link>
-                                                                )}
-                                                         </>
+                                                         </div>
                                                   )}
-                                          </div>
+                                           </div>
                                    </div>
 
                                    <div className="flex items-center space-x-4">

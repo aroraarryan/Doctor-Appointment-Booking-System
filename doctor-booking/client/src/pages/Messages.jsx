@@ -16,7 +16,7 @@ import {
 
 const Messages = () => {
        const { user } = useAuth();
-       const { latestMessage } = useRealtime();
+       const { latestMessage, latestUserUpdate, latestConvUpdate } = useRealtime();
        const [conversations, setConversations] = useState([]);
        const [activeConversation, setActiveConversation] = useState(null);
        const [messages, setMessages] = useState([]);
@@ -50,10 +50,10 @@ const Messages = () => {
        }, [initialConvId, conversations]);
 
        useEffect(() => {
-               if (activeConversation) {
-                      fetchMessages(activeConversation.id);
-                      markAsRead(activeConversation.id);
-               }
+                if (activeConversation) {
+                       fetchMessages(activeConversation.id);
+                       markAsRead(activeConversation.id);
+                }
        }, [activeConversation]);
 
        useEffect(() => {
@@ -93,7 +93,6 @@ const Messages = () => {
         }, [latestMessage, activeConversation, user.id]);
 
         // Handle direct conversation updates (like unread counts)
-        const { latestConvUpdate } = useRealtime();
         useEffect(() => {
                if (latestConvUpdate) {
                       setConversations(prev => prev.map(c => 
@@ -101,6 +100,26 @@ const Messages = () => {
                       ));
                }
         }, [latestConvUpdate]);
+
+        // Update user status in real-time
+        useEffect(() => {
+               if (latestUserUpdate) {
+                      // Update active conversation if it's the same user
+                      if (activeConversation && latestUserUpdate.id === activeConversation.otherUser.id) {
+                             setActiveConversation(prev => ({
+                                    ...prev,
+                                    otherUser: { ...prev.otherUser, last_seen: latestUserUpdate.last_seen }
+                             }));
+                      }
+                      
+                      // Update in conversation list
+                      setConversations(prev => prev.map(c => 
+                             c.otherUser.id === latestUserUpdate.id 
+                                    ? { ...c, otherUser: { ...c.otherUser, last_seen: latestUserUpdate.last_seen } }
+                                    : c
+                      ));
+               }
+        }, [latestUserUpdate, activeConversation]);
 
        const fetchConversations = async () => {
               try {
@@ -222,8 +241,9 @@ const Messages = () => {
               <div className="flex h-[calc(100vh-12rem)] bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
                      {/* Sidebar - Conversations */}
                      <div className="w-1/3 border-r border-gray-100 flex flex-col bg-gray-50/30">
-                            <div className="p-4 border-b border-gray-100 bg-white">
+                            <div className="p-4 border-b border-gray-100 bg-white flex justify-between items-center">
                                    <h2 className="text-lg font-bold text-gray-800">Messages</h2>
+                                   <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" title="Connected to Supabase Realtime"></div>
                             </div>
                             <div className="flex-1 overflow-y-auto">
                                    {conversations.length > 0 ? (
@@ -238,11 +258,13 @@ const Messages = () => {
                                                  >
                                                         <div className="relative">
                                                                <img
-                                                                      src={conv.otherUser.avatar_url || 'https://via.placeholder.com/40'}
+                                                                      src={conv.otherUser.avatar_url || 'https://api.dicebear.com/7.x/themeil/svg?seed=' + conv.otherUser.name}
                                                                       alt={conv.otherUser.name}
                                                                       className="h-12 w-12 rounded-full object-cover border-2 border-white shadow-sm"
                                                                />
-                                                               {/* Status indicator could go here */}
+                                                               {conv.otherUser.last_seen && (new Date() - new Date(conv.otherUser.last_seen)) < 300000 && (
+                                                                      <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></div>
+                                                               )}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                                <div className="flex justify-between items-baseline">
@@ -256,7 +278,7 @@ const Messages = () => {
                                                                               {((user.role === 'patient' && conv.patient_unread_count > 0) || 
                                                                                 (user.role === 'doctor' && conv.doctor_unread_count > 0)) && (
                                                                                      <span className="bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                                                                                            {user.role === 'patient' ? conv.patient_unread_count : conv.doctor_unread_count}
+                                                                                            {user.role === 'patient' || user.role === 'guest' ? conv.patient_unread_count : conv.doctor_unread_count}
                                                                                      </span>
                                                                               )}
                                                                        </div>
@@ -282,7 +304,7 @@ const Messages = () => {
                                           {/* Chat Header */}
                                           <div className="p-4 border-b border-gray-100 flex items-center bg-white">
                                                  <img
-                                                        src={activeConversation.otherUser.avatar_url || 'https://via.placeholder.com/40'}
+                                                        src={activeConversation.otherUser.avatar_url || 'https://api.dicebear.com/7.x/themeil/svg?seed=' + activeConversation.otherUser.name}
                                                         alt={activeConversation.otherUser.name}
                                                         className="h-10 w-10 rounded-full object-cover mr-3 border shadow-sm"
                                                  />
@@ -309,36 +331,36 @@ const Messages = () => {
                                                                key={msg.id || idx}
                                                                className={`flex ${msg.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
                                                         >
-                                                                <div className={`max-w-[75%] rounded-2xl p-3 shadow-sm ${msg.sender_id === user.id ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none'}`}>
-                                                                       {msg.message_type === 'text' && (
-                                                                              <p className="text-sm leading-relaxed">{msg.content}</p>
-                                                                       )}
-                                                                       {msg.message_type === 'image' && (
-                                                                              <img src={msg.file_url} alt="Sent image" className="rounded-lg max-w-full h-auto cursor-pointer" onClick={() => window.open(msg.file_url, '_blank')} />
-                                                                       )}
-                                                                       {msg.message_type === 'voice' && (
-                                                                              <div className="flex items-center space-x-2 py-1">
-                                                                                     <div className="p-2 bg-white/20 rounded-full">
-                                                                                            <audio src={msg.file_url} controls className="h-8 max-w-[200px]" />
-                                                                                     </div>
-                                                                                     <span className="text-[10px] opacity-80">{msg.file_duration_secs}s</span>
-                                                                              </div>
-                                                                       )}
-                                                                       <div className="flex items-center justify-end mt-1 space-x-1">
-                                                                              <p className={`text-[10px] ${msg.sender_id === user.id ? 'text-indigo-100' : 'text-gray-400'}`}>
-                                                                                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                              </p>
-                                                                              {msg.sender_id === user.id && (
-                                                                                     msg.read_at ? (
-                                                                                            <ChevronDoubleRightIcon className="h-3 w-3 text-white" title={`Read at ${new Date(msg.read_at).toLocaleTimeString()}`} />
-                                                                                     ) : msg.delivered_at ? (
-                                                                                            <CheckIcon className="h-3 w-3 text-indigo-200" title="Delivered" />
-                                                                                     ) : (
-                                                                                            <CheckIcon className="h-3 w-3 text-indigo-300 opacity-50" title="Sent" />
-                                                                                     )
-                                                                              )}
-                                                                       </div>
-                                                                </div>
+                                                               <div className={`max-w-[75%] rounded-2xl p-3 shadow-sm ${msg.sender_id === user.id ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none'}`}>
+                                                                      {msg.message_type === 'text' && (
+                                                                             <p className="text-sm leading-relaxed">{msg.content}</p>
+                                                                      )}
+                                                                      {msg.message_type === 'image' && (
+                                                                             <img src={msg.file_url} alt="Sent image" className="rounded-lg max-w-full h-auto cursor-pointer" onClick={() => window.open(msg.file_url, '_blank')} />
+                                                                      )}
+                                                                      {msg.message_type === 'voice' && (
+                                                                             <div className="flex items-center space-x-2 py-1">
+                                                                                    <div className="p-2 bg-white/20 rounded-full flex items-center">
+                                                                                           <audio src={msg.file_url} controls className="h-8 max-w-[200px]" />
+                                                                                    </div>
+                                                                                    <span className="text-[10px] opacity-80">{msg.file_duration_secs}s</span>
+                                                                             </div>
+                                                                      )}
+                                                                      <div className="flex items-center justify-end mt-1 space-x-1">
+                                                                             <p className={`text-[10px] ${msg.sender_id === user.id ? 'text-indigo-100' : 'text-gray-400'}`}>
+                                                                                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                             </p>
+                                                                             {msg.sender_id === user.id && (
+                                                                                    msg.read_at ? (
+                                                                                           <ChevronDoubleRightIcon className="h-3 w-3 text-white" title={`Read at ${new Date(msg.read_at).toLocaleTimeString()}`} />
+                                                                                    ) : msg.delivered_at ? (
+                                                                                           <CheckIcon className="h-3 w-3 text-indigo-200" title="Delivered" />
+                                                                                    ) : (
+                                                                                           <CheckIcon className="h-3 w-3 text-indigo-300 opacity-50" title="Sent" />
+                                                                                    )
+                                                                             )}
+                                                                      </div>
+                                                               </div>
                                                         </div>
                                                  ))}
                                                  <div ref={messagesEndRef} />

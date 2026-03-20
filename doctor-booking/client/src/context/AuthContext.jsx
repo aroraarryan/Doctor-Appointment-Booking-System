@@ -11,6 +11,21 @@ export const AuthProvider = ({ children }) => {
        const navigate = useNavigate();
 
        useEffect(() => {
+              if (user) {
+                     const updateLastSeen = async () => {
+                            try {
+                                   await supabase.from('users').update({ last_seen: new Date().toISOString() }).eq('id', user.id);
+                            } catch (err) {
+                                   console.error('Presence update failed:', err);
+                            }
+                     };
+                     updateLastSeen();
+                     const interval = setInterval(updateLastSeen, 120000); // 2 minutes
+                     return () => clearInterval(interval);
+              }
+       }, [user]);
+
+       useEffect(() => {
               const initAuth = async () => {
                      const { data: { session } } = await supabase.auth.getSession();
                      if (session) {

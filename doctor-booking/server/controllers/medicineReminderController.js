@@ -214,10 +214,60 @@ const deactivateReminder = async (req, res) => {
     }
 };
 
+// GET /api/medicine-reminders/adherence
+const getAdherenceStats = async (req, res) => {
+    try {
+        const patientId = req.user.id;
+        const { days = 30 } = req.query;
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - parseInt(days));
+
+        // Get all logs for the period
+        const { data: logs, error } = await supabase
+            .from('medicine_logs')
+            .select('status, scheduled_time')
+            .eq('patient_id', patientId)
+            .gte('scheduled_time', startDate.toISOString());
+
+        if (error) throw error;
+
+        const takenCount = logs.filter(l => l.status === 'taken').length;
+        const missedCount = logs.filter(l => l.status === 'missed').length;
+        const totalLogged = logs.length;
+        const adherenceRate = totalLogged > 0 ? Math.round((takenCount / totalLogged) * 100) : 100;
+
+        // Group by day for a trend chart
+        const dailyStats = logs.reduce((acc, log) => {
+            const date = log.scheduled_time.split('T')[0];
+            if (!acc[date]) acc[date] = { date, taken: 0, total: 0 };
+            acc[date].total++;
+            if (log.status === 'taken') acc[date].taken++;
+            return acc;
+        }, {});
+
+        const trend = Object.values(dailyStats).sort((a, b) => a.date.localeCompare(b.date)).map(d => ({
+            date: d.date,
+            rate: Math.round((d.taken / d.total) * 100)
+        }));
+
+        res.status(200).json({
+            adherenceRate,
+            takenCount,
+            missedCount,
+            totalLogged,
+            trend
+        });
+    } catch (error) {
+        console.error('getAdherenceStats Error:', error);
+        res.status(400).json({ error: error.message });
+    }
+};
+
 module.exports = {
     createMedicineReminder,
     getActiveReminders,
     logMedicineIntake,
     getTodaySchedule,
+    getAdherenceStats,
     deactivateReminder
 };

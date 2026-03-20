@@ -8,6 +8,7 @@ import {
     UsersIcon, 
     CalendarDaysIcon, 
     BanknotesIcon, 
+    CheckCircleIcon,
     StarIcon,
     ArrowTrendingUpIcon,
     ArrowTrendingDownIcon,
@@ -113,20 +114,56 @@ const DoctorAnalytics = () => {
                         <ClockIcon className="h-5 w-5 text-indigo-500" />
                         <span>Busiest Times (Hour of Day)</span>
                     </h3>
-                    <div className="grid grid-cols-6 md:grid-cols-13 gap-1">
-                        {data.appointments_by_hour.map((h, i) => {
-                            const intensity = h.count > 0 ? Math.min(900, h.count * 200 + 100) : 50;
+                    <div className="grid grid-cols-6 md:grid-cols-12 gap-3">
+                        {Array.from({ length: 24 }).map((_, hour) => {
+                            const hourData = data.appointments_by_hour?.find(h => {
+                                // Handle both '08:00' and '8:00' or numeric hour
+                                const hPart = typeof h.hour === 'string' ? h.hour.split(':')[0] : h.hour;
+                                return parseInt(hPart) === hour;
+                            });
+                            const count = hourData?.count || 0;
+                            const total = data.total_appointments || 1;
+                            const maxCount = Math.max(...(data.appointments_by_hour?.map(h => h.count) || [1]));
+                            const intensity = count > 0 ? count / maxCount : 0;
+                            const percentage = ((count / total) * 100).toFixed(1);
+                            
+                            const getBGColor = (val) => {
+                                if (val === 0) return '#f8fafc';
+                                if (val < 0.3) return '#e0e7ff';
+                                if (val < 0.6) return '#818cf8';
+                                if (val < 0.9) return '#4f46e5';
+                                return '#3730a3';
+                            };
+
                             return (
-                                <div key={i} className="flex flex-col items-center group relative">
+                                <div key={hour} className="group relative">
                                     <div 
-                                        className={`w-full h-12 rounded-lg transition-all ${h.count > 0 ? 'bg-indigo-600' : 'bg-gray-100'}`}
-                                        style={{ opacity: h.count > 0 ? Math.max(0.2, h.count / Math.max(...data.appointments_by_hour.map(x => x.count || 1))) : 1 }}
-                                    ></div>
-                                    <span className="text-[10px] text-gray-400 mt-2 font-medium">{h.hour.split(':')[0]}h</span>
+                                        className="h-20 rounded-2xl transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1 cursor-help"
+                                        style={{ 
+                                            backgroundColor: getBGColor(intensity),
+                                            border: intensity > 0 ? 'none' : '1px dashed #e2e8f0'
+                                        }}
+                                    >
+                                        {intensity > 0.6 && (
+                                            <div className="h-full flex items-center justify-center">
+                                                <span className="text-[10px] font-bold text-white opacity-40 uppercase tracking-tighter rotate-90">Peak</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p className="text-[10px] text-center mt-2 font-bold text-gray-400">
+                                        {hour === 0 ? '12A' : hour < 12 ? `${hour}A` : hour === 12 ? '12P' : `${hour-12}P`}
+                                    </p>
                                     
                                     {/* Tooltip */}
-                                    <div className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-900 text-white text-[10px] py-1 px-2 rounded whitespace-nowrap z-10">
-                                        {h.count} appointments at {h.hour}
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-gray-900 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-20 shadow-2xl scale-95 group-hover:scale-100 min-w-[100px]">
+                                        <p className="text-[10px] font-bold mb-0.5">{hour}:00 - {hour}:59</p>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-lg font-black">{count}</span>
+                                            <span className="text-[10px] text-gray-400 font-medium">({percentage}%)</span>
+                                        </div>
+                                        <div className="w-full h-1 bg-gray-800 rounded-full mt-1 overflow-hidden">
+                                            <div className="h-full bg-indigo-500" style={{ width: `${intensity * 100}%` }}></div>
+                                        </div>
                                     </div>
                                 </div>
                             );

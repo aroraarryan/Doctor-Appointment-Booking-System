@@ -32,6 +32,8 @@ const DoctorProfile = () => {
        const [appliedCoupon, setAppliedCoupon] = useState(null);
        const [validatingCoupon, setValidatingCoupon] = useState(false);
 
+       const PLATFORM_FEE = 50;
+
        useEffect(() => {
               const fetchDoctorData = async () => {
                      try {
@@ -111,7 +113,7 @@ const DoctorProfile = () => {
                             key: orderData.keyId,
                             amount: orderData.amount,
                             currency: orderData.currency,
-                            name: 'DocBook',
+                            name: 'Curova',
                             description: isRecurring 
                                    ? `${recurrenceCount} sessions with Dr. ${orderData.doctorName}`
                                    : `Consultation with Dr. ${orderData.doctorName}`,
@@ -196,10 +198,16 @@ const DoctorProfile = () => {
 
        const minDate = new Date().toISOString().split('T')[0];
 
+       const calculateTotal = () => {
+              const base = isRecurring ? doctor.fees * recurrenceCount : doctor.fees;
+              const discount = appliedCoupon ? (appliedCoupon.type === 'percentage' ? (base * appliedCoupon.value / 100) : appliedCoupon.value) : 0;
+              return Math.max(0, base + PLATFORM_FEE - discount);
+       };
+
        return (
               <div className="max-w-5xl mx-auto space-y-12 pb-20">
                      {/* Doctor Header */}
-                     <div className="bg-white p-10 rounded-3xl shadow-md border border-gray-100 flex flex-col md:flex-row gap-10 items-center md:items-start text-center md:text-left relative overflow-hidden group">
+                     <div className="bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8 md:gap-10 items-center md:items-start text-center md:text-left relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full -mr-10 -mt-10 group-hover:bg-indigo-100 transition-colors"></div>
 
                             <div className="relative">
@@ -217,7 +225,7 @@ const DoctorProfile = () => {
                                                'bg-blue-500'
                                            }`} title="Verified Specialist">
                                                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                                         <path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745a3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
+                                                         <path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
                                                   </svg>
                                                   <span className="text-[10px] font-black pr-1 uppercase">
                                                       {doctor.doctor_subscriptions?.find(s => s.status === 'active')?.plan?.badge_type || 'VERIFIED'}
@@ -228,9 +236,9 @@ const DoctorProfile = () => {
 
                             <div className="flex-1 space-y-6 relative z-10">
                                    <div>
-                                          <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-                                                 <h1 className="text-4xl font-extrabold text-gray-900 leading-tight">{doctor.name}</h1>
-                                          </div>
+                                           <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
+                                                  <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">{doctor.name}</h1>
+                                           </div>
                                           <p className="text-indigo-600 font-bold text-xl flex items-center justify-center md:justify-start gap-2">
                                                  <span className="bg-indigo-100 px-3 py-1 rounded-lg text-sm">{doctor.specialty}</span>
                                                  {doctor.city && <span className="text-gray-400 text-sm font-normal">• {doctor.city}, {doctor.state}</span>}
@@ -255,9 +263,9 @@ const DoctorProfile = () => {
                                           </div>
                                    </div>
 
-                                   <p className="text-gray-600 leading-relaxed max-w-2xl text-lg italic">
-                                          "{doctor.bio || 'Dedicated to providing exceptional care with a focus on patient well-being.'}"
-                                   </p>
+                                    <p className="text-gray-600 leading-relaxed max-w-2xl text-base md:text-lg italic px-4 md:px-0">
+                                           "{doctor.bio || 'Dedicated to providing exceptional care with a focus on patient well-being.'}"
+                                    </p>
 
                                    {user && user.role === 'patient' && (
                                           <button
@@ -289,11 +297,10 @@ const DoctorProfile = () => {
                                                         <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                                         Appointment
                                                  </h3>
-
                                                  <div className="space-y-6">
                                                         <div>
                                                                <label className="block text-sm font-bold text-gray-700 mb-3">Work Calendar</label>
-                                                               <div className="grid grid-cols-7 gap-1 p-2 bg-gray-50 rounded-2xl border border-gray-100">
+                                                                <div className="grid grid-cols-7 gap-1 p-1 md:p-2 bg-gray-50 rounded-2xl border border-gray-100">
                                                                       {Object.entries(availability).map(([date, data]) => {
                                                                              const day = new Date(date).getDate();
                                                                              const isPast = new Date(date) < new Date(new Date().setHours(0, 0, 0, 0));
@@ -303,11 +310,11 @@ const DoctorProfile = () => {
                                                                                            disabled={isPast || !data.available}
                                                                                            onClick={() => setSelectedDate(date)}
                                                                                            className={`aspect-square flex flex-col items-center justify-center rounded-xl text-xs transition-all ${selectedDate === date
-                                                                                                         ? 'bg-indigo-600 text-white scale-110 shadow-md'
-                                                                                                         : isPast || !data.available
-                                                                                                                ? 'text-gray-300 cursor-not-allowed'
-                                                                                                                : 'hover:bg-indigo-50 text-gray-700'
-                                                                                                  }`}
+                                                                                                          ? 'bg-indigo-600 text-white scale-110 shadow-md'
+                                                                                                          : isPast || !data.available
+                                                                                                                 ? 'text-gray-300 cursor-not-allowed'
+                                                                                                                 : 'hover:bg-indigo-50 text-gray-700'
+                                                                                                   }`}
                                                                                     >
                                                                                            <span className="font-bold">{day}</span>
                                                                                            {!isPast && data.available && <span className="w-1 h-1 bg-green-400 rounded-full mt-1"></span>}
@@ -455,15 +462,15 @@ const DoctorProfile = () => {
 
                      {/* Confirmation Modal */}
                      {showModal && (
-                            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                                   <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 animate-in fade-in zoom-in duration-200 border border-gray-100">
+                            <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
+                                   <div className="bg-white rounded-[2rem] shadow-2xl max-w-sm w-full p-6 md:p-8 animate-in fade-in zoom-in duration-200 border border-gray-100 my-auto">
                                           <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6">
                                                  <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                           </div>
                                           <h3 className="text-2xl font-extrabold text-gray-900 mb-2">Confirm Booking?</h3>
                                           <p className="text-gray-500 text-sm mb-6">Please review your appointment details before proceeding to payment.</p>
                                           
-                                          <div className="space-y-4 bg-gray-50 p-6 rounded-2xl border border-gray-100 mb-6">
+                                          <div className="space-y-3 bg-gray-50 p-6 rounded-2xl border border-gray-100 mb-6">
                                                  <div className="flex justify-between items-center text-sm">
                                                         <span className="text-gray-400 font-bold uppercase tracking-wider text-[10px]">Date</span>
                                                         <span className="text-gray-900 font-bold">{selectedDate}</span>
@@ -474,13 +481,30 @@ const DoctorProfile = () => {
                                                  </div>
                                                  {isRecurring && (
                                                         <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-200">
-                                                               <span className="text-indigo-600 font-bold uppercase tracking-wider text-[10px]">Recurring</span>
-                                                               <span className="text-indigo-600 font-bold">{recurrenceCount} Sessions ({recurrencePattern})</span>
+                                                               <span className="text-indigo-600 font-bold uppercase tracking-wider text-[10px]">Sessions</span>
+                                                               <span className="text-indigo-600 font-bold">{recurrenceCount} ({recurrencePattern})</span>
                                                         </div>
                                                  )}
-                                                 <div className="flex justify-between items-center text-sm pt-4 border-t border-gray-200">
-                                                        <span className="text-gray-400 font-bold uppercase tracking-wider text-[10px]">Base Fee</span>
-                                                        <span className="text-gray-900 font-bold text-base">₹{isRecurring ? doctor.fees * recurrenceCount : doctor.fees}</span>
+                                                 
+                                                 <div className="pt-4 mt-2 border-t border-gray-200 space-y-2">
+                                                        <div className="flex justify-between items-center text-sm">
+                                                               <span className="text-gray-400 font-bold uppercase tracking-wider text-[10px]">Base Fee</span>
+                                                               <span className="text-gray-600 font-bold">₹{isRecurring ? doctor.fees * recurrenceCount : doctor.fees}</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center text-sm">
+                                                               <span className="text-gray-400 font-bold uppercase tracking-wider text-[10px]">Platform Fee</span>
+                                                               <span className="text-gray-600 font-bold">₹{PLATFORM_FEE}</span>
+                                                        </div>
+                                                        {appliedCoupon && (
+                                                               <div className="flex justify-between items-center text-sm text-green-600">
+                                                                      <span className="font-bold uppercase tracking-wider text-[10px]">Discount</span>
+                                                                      <span className="font-bold">-₹{appliedCoupon.type === 'percentage' ? ((isRecurring ? doctor.fees * recurrenceCount : doctor.fees) * appliedCoupon.value / 100) : appliedCoupon.value}</span>
+                                                               </div>
+                                                        )}
+                                                        <div className="flex justify-between items-center pt-2 border-t border-indigo-100">
+                                                               <span className="text-indigo-600 font-black uppercase tracking-wider text-[10px]">Total Amount</span>
+                                                               <span className="text-indigo-600 font-black text-xl">₹{calculateTotal()}</span>
+                                                        </div>
                                                  </div>
                                           </div>
 
@@ -500,7 +524,7 @@ const DoctorProfile = () => {
                                                                 if (!couponCode) return;
                                                                 setValidatingCoupon(true);
                                                                 try {
-                                                                    const { data } = await api.get(`/coupons/validate?code=${couponCode}&doctorId=${id}&amount=${doctor.fees}`);
+                                                                    const { data } = await api.get(`/coupons/validate?code=${couponCode}&doctorId=${id}&amount=${isRecurring ? doctor.fees * recurrenceCount : doctor.fees}`);
                                                                     setAppliedCoupon(data);
                                                                     toast.success('Coupon applied!');
                                                                 } catch (err) {

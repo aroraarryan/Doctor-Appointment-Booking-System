@@ -40,7 +40,7 @@ const Register = () => {
        };
 
        return (
-              <div className="max-w-md mx-auto mt-10 bg-white p-8 border border-gray-200 rounded-lg shadow-sm">
+              <div className="max-w-md mx-auto mt-6 md:mt-12 bg-white p-6 md:p-8 border border-gray-200 rounded-2xl shadow-sm">
                      <h2 className="text-2xl font-bold text-center mb-6 text-indigo-600">Join HealthBook</h2>
                      {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
                      <form onSubmit={handleSubmit} className="space-y-4">

@@ -1,6 +1,19 @@
 const supabase = require('../config/supabase');
 const path = require('path');
 
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
+const validateFile = (file, allowedTypes = ALLOWED_TYPES) => {
+    if (!allowedTypes.includes(file.mimetype)) {
+        return `Invalid file type: ${file.mimetype}. Allowed: ${allowedTypes.join(', ')}`;
+    }
+    if (file.size > MAX_SIZE) {
+        return `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum: 10MB`;
+    }
+    return null;
+};
+
 // POST /api/upload/avatar - Upload profile photo
 const uploadAvatar = async (req, res) => {
        if (!req.files || !req.files.avatar) {
@@ -8,6 +21,12 @@ const uploadAvatar = async (req, res) => {
        }
 
        const file = req.files.avatar;
+
+       const validationError = validateFile(file, ['image/jpeg', 'image/png', 'image/webp']);
+       if (validationError) {
+              return res.status(400).json({ error: validationError });
+       }
+
        const userId = req.user.id;
        const fileExt = path.extname(file.name);
        const fileName = `avatar${fileExt}`;
@@ -51,6 +70,12 @@ const uploadMedicalRecord = async (req, res) => {
        }
 
        const file = req.files.record;
+
+       const validationError = validateFile(file);
+       if (validationError) {
+              return res.status(400).json({ error: validationError });
+       }
+
        const userId = req.user.id;
        const { appointmentId, fileName: customName } = req.body;
 

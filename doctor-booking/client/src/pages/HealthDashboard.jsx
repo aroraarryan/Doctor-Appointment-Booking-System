@@ -23,6 +23,7 @@ const HealthDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState({});
   const [todaySchedule, setTodaySchedule] = useState({ schedule: [], adherenceRate: 100 });
+  const [adherenceStats, setAdherenceStats] = useState({ adherenceRate: 100, trend: [] });
   const [recentSymptoms, setRecentSymptoms] = useState([]);
 
   useEffect(() => {
@@ -32,13 +33,15 @@ const HealthDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [summaryRes, scheduleRes, symptomsRes] = await Promise.all([
+      const [summaryRes, scheduleRes, adherenceRes, symptomsRes] = await Promise.all([
         api.get('/health-metrics/summary'),
         api.get('/medicine-reminders/today'),
+        api.get('/medicine-reminders/adherence?days=7'),
         api.get('/symptom-checker/history')
       ]);
       setSummary(summaryRes.data);
       setTodaySchedule(scheduleRes.data);
+      setAdherenceStats(adherenceRes.data);
       setRecentSymptoms(symptomsRes.data.slice(0, 3));
     } catch (error) {
       console.error('Error fetching health data:', error);
@@ -50,7 +53,7 @@ const HealthDashboard = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'overview': return <OverviewTab summary={summary} schedule={todaySchedule} symptoms={recentSymptoms} onRefresh={fetchDashboardData} setActiveTab={setActiveTab} />;
+      case 'overview': return <OverviewTab summary={summary} schedule={todaySchedule} adherenceStats={adherenceStats} symptoms={recentSymptoms} onRefresh={fetchDashboardData} setActiveTab={setActiveTab} />;
       case 'metrics': return <MetricsTab />;
       case 'medicines': return <MedicinesTab />;
       case 'symptoms': return <SymptomsTab />;
@@ -96,7 +99,7 @@ const HealthDashboard = () => {
 
 // --- TAB COMPONENTS ---
 
-const OverviewTab = ({ summary, schedule, symptoms, onRefresh, setActiveTab }) => {
+const OverviewTab = ({ summary, schedule, adherenceStats, symptoms, onRefresh, setActiveTab }) => {
   const metricsInfo = [
     { type: 'blood_pressure_systolic', label: 'Blood Pressure', icon: <HeartIcon className="w-6 h-6" />, color: 'red' },
     { type: 'blood_sugar_fasting', label: 'Blood Sugar', icon: <BeakerIcon className="w-6 h-6" />, color: 'blue' },
@@ -210,10 +213,28 @@ const OverviewTab = ({ summary, schedule, symptoms, onRefresh, setActiveTab }) =
               <span className="text-indigo-100 font-bold">Goal: 100%</span>
             </div>
             <div className="w-full bg-white/20 h-3 rounded-full overflow-hidden mb-4">
-              <div className="h-full bg-white rounded-full transition-all duration-1000" style={{ width: `${schedule.adherenceRate}%` }}></div>
+              <div className="h-full bg-white rounded-full transition-all duration-1000" style={{ width: `${adherenceStats.adherenceRate}%` }}></div>
             </div>
             <p className="text-sm text-indigo-100 font-medium">Keep it up! Consistency is key to your health.</p>
           </div>
+        </div>
+
+        {/* Adherence Trend Chart */}
+        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+           <h3 className="text-sm font-black text-gray-900 mb-4">7-Day Adherence Trend</h3>
+           <div className="h-32 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={adherenceStats.trend}>
+                  <Line type="monotone" dataKey="rate" stroke="#4f46e5" strokeWidth={3} dot={false} />
+                  <XAxis dataKey="date" hide />
+                  <YAxis hide domain={[0, 100]} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '10px' }}
+                    labelFormatter={(d) => new Date(d).toLocaleDateString()}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+           </div>
         </div>
 
         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
@@ -1102,38 +1123,50 @@ const BMITab = () => {
   const [units, setUnits] = useState('metric');
   const [data, setData] = useState({ weight: '', height: '', ft: '', in: '' });
   const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const calculate = () => {
+  const calculate = async () => {
     let w = parseFloat(data.weight);
     let h = parseFloat(data.height);
 
     if (units === 'imperial') {
-      const totalIn = (parseInt(data.ft) * 12) + parseInt(data.in);
-      h = totalIn * 2.54; // convert to cm
-      w = w * 0.453592; // convert lbs to kg
+      const totalIn = (parseInt(data.ft) || 0) * 12 + (parseInt(data.in) || 0);
+      h = totalIn * 2.54; 
+      w = w * 0.453592; 
     }
 
-    if (!w || !h) return;
+    if (!w || !h) return toast.error('Please enter weight and height');
 
-    const hm = h / 100;
-    const bmi = (w / (hm * hm)).toFixed(1);
-    const bmiNum = parseFloat(bmi);
+    try {
+      setLoading(true);
+      const { data: res } = await api.post('/health-metrics/bmi', {
+        weight_kg: w,
+        height_cm: h,
+        age: 30, // Default for now
+        activity_level: 'moderate'
+      });
+      
+      const colorMap = {
+        'Underweight': 'text-blue-500',
+        'Normal weight': 'text-green-500',
+        'Overweight': 'text-yellow-500',
+        'Obese': 'text-red-500'
+      };
 
-    let category = '';
-    let color = '';
-    if (bmiNum < 18.5) { category = 'Underweight'; color = 'text-blue-500'; }
-    else if (bmiNum < 25) { category = 'Normal weight'; color = 'text-green-500'; }
-    else if (bmiNum < 30) { category = 'Overweight'; color = 'text-yellow-500'; }
-    else { category = 'Obese'; color = 'text-red-500'; }
-
-    const tips = {
-      'Underweight': ['Eat more calories than you burn', 'Focus on protein-rich foods', 'Strength training to build muscle'],
-      'Normal weight': ['Maintain balanced nutrition', 'Regular aerobic exercise', 'Stay hydrated'],
-      'Overweight': ['Portion control', 'Increase fiber intake', '30 min daily activity'],
-      'Obese': ['Consult a nutritionist', 'Monitor calorie intake', 'Gradual physical activity increase']
-    };
-
-    setResult({ bmi, category, color, tips: tips[category], weight: w, height: h });
+      setResult({ 
+        bmi: res.bmi, 
+        category: res.category, 
+        color: colorMap[res.category] || 'text-indigo-600', 
+        tips: res.recommendations, 
+        healthy_range: res.healthy_range,
+        weight: w, 
+        height: h 
+      });
+    } catch (error) {
+      toast.error('Calculation failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -1193,9 +1226,10 @@ const BMITab = () => {
 
           <button 
             onClick={calculate}
-            className="w-full py-5 bg-indigo-600 text-white rounded-3xl font-black text-lg shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+            disabled={loading}
+            className="w-full py-5 bg-indigo-600 text-white rounded-3xl font-black text-lg shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
           >
-            Calculate BMI
+            {loading ? <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div> : 'Calculate BMI'}
           </button>
         </div>
       </div>
@@ -1226,7 +1260,7 @@ const BMITab = () => {
             <div className="relative z-10 p-6 bg-indigo-900 text-white rounded-[2rem] shadow-xl overflow-hidden group">
                <div className="absolute bottom-0 right-0 -mb-8 -mr-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
                <h4 className="font-black text-xs uppercase tracking-widest opacity-60 mb-1">Healthy Weight for you</h4>
-               <p className="text-2xl font-black">{(18.5 * (result.height/100)**2).toFixed(1)}kg - {(24.9 * (result.height/100)**2).toFixed(1)}kg</p>
+               <p className="text-2xl font-black">{result.healthy_range}</p>
             </div>
           </div>
         ) : (

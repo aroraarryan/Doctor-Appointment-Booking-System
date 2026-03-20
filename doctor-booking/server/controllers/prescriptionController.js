@@ -162,7 +162,7 @@ const generatePrescriptionPDF = async (req, res) => {
         doc.pipe(res);
 
         // Header
-        doc.fontSize(25).text('DocBook Medical Prescription', { align: 'center' });
+        doc.fontSize(25).text('Curova Medical Prescription', { align: 'center' });
         doc.moveDown();
         doc.fontSize(12).text(`Date: ${new Date(p.created_at).toLocaleDateString()}`, { align: 'right' });
         doc.moveDown();

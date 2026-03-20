@@ -3,7 +3,8 @@ const router = express.Router();
 const { 
   logHealthMetric, 
   getHealthMetrics, 
-  getHealthSummary 
+  getHealthSummary,
+  calculateBMIEp
 } = require('../controllers/healthMetricsController');
 const { verifyToken, isPatient } = require('../middleware/auth');
 
@@ -12,6 +13,7 @@ router.use(verifyToken);
 router.use(isPatient);
 
 router.post('/', logHealthMetric);
+router.post('/bmi', calculateBMIEp);
 router.get('/', getHealthMetrics);
 router.get('/summary', getHealthSummary);
 

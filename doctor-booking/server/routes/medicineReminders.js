@@ -5,6 +5,7 @@ const {
   getActiveReminders, 
   logMedicineIntake, 
   getTodaySchedule, 
+  getAdherenceStats,
   deactivateReminder 
 } = require('../controllers/medicineReminderController');
 const { verifyToken, isPatient } = require('../middleware/auth');
@@ -15,6 +16,7 @@ router.use(isPatient);
 router.post('/', createMedicineReminder);
 router.get('/', getActiveReminders);
 router.get('/today', getTodaySchedule);
+router.get('/adherence', getAdherenceStats);
 router.post('/:id/log', logMedicineIntake);
 router.delete('/:id', deactivateReminder);
 

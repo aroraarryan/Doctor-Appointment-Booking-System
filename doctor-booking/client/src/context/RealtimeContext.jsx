@@ -12,6 +12,7 @@ export const RealtimeProvider = ({ children }) => {
        const [unreadCount, setUnreadCount] = useState(0);
        const [latestMessage, setLatestMessage] = useState(null);
        const [latestConvUpdate, setLatestConvUpdate] = useState(null);
+       const [latestUserUpdate, setLatestUserUpdate] = useState(null);
 
        const fetchNotifications = useCallback(async () => {
               if (!user) return;
@@ -86,46 +87,46 @@ export const RealtimeProvider = ({ children }) => {
                      )
                      .subscribe();
 
-                      // Subscribe to messages for real-time chat updates (Insert & Update for read receipts)
-                      const messageChannel = supabase
-                             .channel(`public:messages:updates`)
-                             .on(
-                                    'postgres_changes',
-                                    {
-                                           event: '*', 
-                                           schema: 'public',
-                                           table: 'messages',
-                                           filter: `sender_id=eq.${user.id}` // Sender wants to see read receipts (updates)
-                                    },
-                                    (payload) => {
-                                           if (payload.eventType === 'UPDATE') {
-                                                  setLatestMessage({ ...payload.new, _isUpdate: true });
-                                           }
-                                    }
-                             )
-                             .on(
-                                    'postgres_changes',
-                                    {
-                                           event: '*',
-                                           schema: 'public',
-                                           table: 'messages',
-                                           filter: `receiver_id=eq.${user.id}` // Receiver wants to see new messages
-                                    },
-                                    (payload) => {
-                                           if (payload.eventType === 'INSERT') {
-                                                  setLatestMessage(payload.new);
-                                                  if (window.location.pathname !== '/messages') {
-                                                         toast('New message received!', {
-                                                                icon: '💬',
-                                                                duration: 4000
-                                                         });
-                                                  }
-                                           } else if (payload.eventType === 'UPDATE') {
-                                                  setLatestMessage({ ...payload.new, _isUpdate: true });
-                                           }
-                                    }
-                             )
-                             .subscribe();
+              // Subscribe to messages for real-time chat updates (Insert & Update for read receipts)
+              const messageChannel = supabase
+                     .channel(`public:messages:updates`)
+                     .on(
+                            'postgres_changes',
+                            {
+                                   event: '*', 
+                                   schema: 'public',
+                                   table: 'messages',
+                                   filter: `sender_id=eq.${user.id}` // Sender wants to see read receipts (updates)
+                            },
+                            (payload) => {
+                                   if (payload.eventType === 'UPDATE') {
+                                          setLatestMessage({ ...payload.new, _isUpdate: true });
+                                   }
+                            }
+                     )
+                     .on(
+                            'postgres_changes',
+                            {
+                                   event: '*',
+                                   schema: 'public',
+                                   table: 'messages',
+                                   filter: `receiver_id=eq.${user.id}` // Receiver wants to see new messages
+                            },
+                            (payload) => {
+                                   if (payload.eventType === 'INSERT') {
+                                          setLatestMessage(payload.new);
+                                          if (window.location.pathname !== '/messages') {
+                                                 toast('New message received!', {
+                                                        icon: '💬',
+                                                        duration: 4000
+                                                 });
+                                          }
+                                   } else if (payload.eventType === 'UPDATE') {
+                                          setLatestMessage({ ...payload.new, _isUpdate: true });
+                                   }
+                            }
+                     )
+                     .subscribe();
 
               // Subscribe to conversations for real-time unread counts and last message updates
               const convChannel = supabase
@@ -149,9 +150,27 @@ export const RealtimeProvider = ({ children }) => {
                      )
                      .subscribe();
 
+              // Subscribe to user presence (last_seen updates)
+              const userChannel = supabase
+                     .channel('public:users:updates')
+                     .on(
+                            'postgres_changes',
+                            {
+                                   event: 'UPDATE',
+                                   schema: 'public',
+                                   table: 'users'
+                            },
+                            (payload) => {
+                                   setLatestUserUpdate(payload.new);
+                            }
+                     )
+                     .subscribe();
+
               return () => {
                      supabase.removeChannel(notificationChannel);
                      supabase.removeChannel(messageChannel);
+                     supabase.removeChannel(convChannel);
+                     supabase.removeChannel(userChannel);
               };
        }, [user, fetchNotifications, fetchUnreadCount]);
 
@@ -161,6 +180,7 @@ export const RealtimeProvider = ({ children }) => {
                      unreadCount,
                      latestMessage,
                      latestConvUpdate,
+                     latestUserUpdate,
                      markAsRead,
                      markAllAsRead,
                      fetchNotifications

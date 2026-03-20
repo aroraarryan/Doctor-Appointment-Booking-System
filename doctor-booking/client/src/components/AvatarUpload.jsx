@@ -1,21 +1,29 @@
 import React, { useState } from 'react';
 import api from '../utils/api';
+import { XCircleIcon } from '@heroicons/react/24/solid';
 
 const AvatarUpload = ({ currentAvatar, onUploadSuccess }) => {
        const [uploading, setUploading] = useState(false);
        const [preview, setPreview] = useState(null);
+       const [error, setError] = useState('');
 
-       const handleFileChange = async (e) => {
+       const handleFileChange = (e) => {
               const file = e.target.files[0];
-              if (!file) return;
+              setError('');
+              if (!file) {
+                     setPreview(null);
+                     return;
+              }
 
               // Validation
               if (!file.type.startsWith('image/')) {
-                     alert('Please upload an image file.');
+                     setError('Please upload an image file (JPG, PNG, etc.).');
+                     setPreview(null);
                      return;
               }
-              if (file.size > 2 * 1024 * 1024) {
-                     alert('File size must be less than 2MB.');
+              if (file.size > 5 * 1024 * 1024) { // Tighten to 5MB for avatars
+                     setError('Avatar size must be less than 5MB.');
+                     setPreview(null);
                      return;
               }
 
@@ -23,9 +31,6 @@ const AvatarUpload = ({ currentAvatar, onUploadSuccess }) => {
               const reader = new FileReader();
               reader.onloadend = () => setPreview(reader.result);
               reader.readAsDataURL(file);
-
-              // Upload immediately or wait for confirm? The prompt says "Preview... On confirm, call POST".
-              // I'll add a confirm button if preview is active.
        };
 
        const handleUpload = async () => {
@@ -34,6 +39,7 @@ const AvatarUpload = ({ currentAvatar, onUploadSuccess }) => {
               if (!file) return;
 
               setUploading(true);
+              setError('');
               const formData = new FormData();
               formData.append('avatar', file);
 
@@ -41,11 +47,10 @@ const AvatarUpload = ({ currentAvatar, onUploadSuccess }) => {
                      const { data } = await api.post('/upload/avatar', formData, {
                             headers: { 'Content-Type': 'multipart/form-data' }
                      });
-                     alert('Profile photo updated!');
                      setPreview(null);
                      if (onUploadSuccess) onUploadSuccess(data.url);
               } catch (error) {
-                     alert('Upload failed: ' + (error.response?.data?.error || error.message));
+                     setError('Upload failed: ' + (error.response?.data?.error || error.message));
               } finally {
                      setUploading(false);
               }
@@ -60,7 +65,11 @@ const AvatarUpload = ({ currentAvatar, onUploadSuccess }) => {
                                    ) : currentAvatar ? (
                                           <img src={currentAvatar} alt="Avatar" className="w-full h-full object-cover" />
                                    ) : (
-                                          <span className="text-3xl text-gray-400">👤</span>
+                                          <div className="text-gray-400 bg-gray-100 w-full h-full flex items-center justify-center">
+                                                 <svg className="h-12 w-12" fill="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                                                 </svg>
+                                          </div>
                                    )}
                             </div>
                             <label
@@ -80,18 +89,28 @@ const AvatarUpload = ({ currentAvatar, onUploadSuccess }) => {
                             />
                      </div>
 
-                     {preview && (
+                     {error && (
+                            <div className="text-[10px] text-red-500 font-bold flex items-center gap-1 animate-shake">
+                                   <XCircleIcon className="h-3 w-3" />
+                                   <span>{error}</span>
+                            </div>
+                     )}
+
+                     {preview && !error && (
                             <div className="flex gap-2">
                                    <button
                                           onClick={handleUpload}
                                           disabled={uploading}
-                                          className="text-xs bg-green-600 text-white px-3 py-1 rounded-md font-bold hover:bg-green-700 disabled:opacity-50"
+                                          className="text-[10px] bg-indigo-600 text-white px-3 py-1 rounded-full font-bold hover:bg-indigo-700 disabled:opacity-50 transition shadow-sm"
                                    >
-                                          {uploading ? 'UPLOADING...' : 'CONFIRM'}
+                                          {uploading ? 'UPLOADING...' : 'CONFIRM CHANGE'}
                                    </button>
                                    <button
-                                          onClick={() => setPreview(null)}
-                                          className="text-xs bg-gray-200 text-gray-600 px-3 py-1 rounded-md font-bold hover:bg-gray-300"
+                                          onClick={() => {
+                                                 setPreview(null);
+                                                 document.getElementById('avatarInput').value = '';
+                                          }}
+                                          className="text-[10px] bg-white border border-gray-200 text-gray-500 px-3 py-1 rounded-full font-bold hover:bg-gray-50 transition"
                                    >
                                           CANCEL
                                    </button>
@@ -99,8 +118,8 @@ const AvatarUpload = ({ currentAvatar, onUploadSuccess }) => {
                      )}
 
                      {uploading && (
-                            <div className="w-full bg-gray-100 h-1 rounded-full overflow-hidden">
-                                   <div className="bg-indigo-600 h-full animate-pulse" style={{ width: '100%' }}></div>
+                            <div className="w-24 bg-gray-100 h-1 rounded-full overflow-hidden">
+                                   <div className="bg-indigo-600 h-full animate-progress" style={{ width: '100%' }}></div>
                             </div>
                      )}
               </div>

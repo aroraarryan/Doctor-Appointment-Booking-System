@@ -478,7 +478,7 @@ const AdminDashboard = () => {
                                             <div className="overflow-x-auto">
                                                     <table className="w-full text-left">
                                                             <thead>
-                                                                    <tr className="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest px-6">
+                                                                    <tr className="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                                                                             <th className="px-8 py-4">Specialist</th>
                                                                             <th className="px-6 py-4">Appts / Completed</th>
                                                                             <th className="px-6 py-4">Efficiency</th>
@@ -488,41 +488,53 @@ const AdminDashboard = () => {
                                                                     </tr>
                                                             </thead>
                                                             <tbody className="divide-y divide-gray-100">
-                                                                    {sortedDoctors.map((doc, idx) => (
-                                                                            <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                                                                                    <td className="px-8 py-4 font-bold text-gray-900">
-                                                                                            <div className="flex flex-col">
-                                                                                                    <span className="text-sm">Dr. {doc.name}</span>
-                                                                                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{doc.specialty}</span>
-                                                                                            </div>
-                                                                                    </td>
-                                                                                    <td className="px-6 py-4 font-medium text-gray-600">
-                                                                                            {doc.total_appointments} / {Math.round(doc.total_appointments * (doc.completion_rate/100))}
-                                                                                    </td>
-                                                                                    <td className="px-6 py-4">
-                                                                                            <div className="flex items-center gap-2">
-                                                                                                    <div className="flex-1 h-1 bg-gray-100 rounded-full max-w-[60px]">
-                                                                                                            <div className={`h-full rounded-full ${doc.completion_rate > 90 ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${doc.completion_rate}%` }}></div>
+                                                                    {sortedDoctors.map((doc, idx) => {
+                                                                            const compColor = doc.completion_rate > 80 ? 'bg-emerald-500' : doc.completion_rate > 50 ? 'bg-amber-500' : 'bg-rose-500';
+                                                                            const ratingColor = doc.avg_rating > 4.5 ? 'text-emerald-600' : doc.avg_rating > 3.5 ? 'text-amber-500' : 'text-rose-500';
+                                                                            const noShowColor = doc.no_show_rate > 15 ? 'text-rose-500' : doc.no_show_rate > 5 ? 'text-amber-500' : 'text-emerald-600';
+
+                                                                            return (
+                                                                                    <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                                                                                            <td className="px-8 py-4 font-bold text-gray-900">
+                                                                                                    <div className="flex flex-col">
+                                                                                                            <span className="text-sm">Dr. {doc.name}</span>
+                                                                                                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{doc.specialty}</span>
                                                                                                     </div>
-                                                                                                    <span className="text-xs font-black text-gray-900">{doc.completion_rate}%</span>
-                                                                                            </div>
-                                                                                    </td>
-                                                                                    <td className="px-6 py-4">
-                                                                                            <div className="flex items-center gap-1 text-amber-500">
-                                                                                                    <StarIcon className="h-4 w-4 fill-current" />
-                                                                                                    <span className="text-xs font-black text-gray-900">{doc.avg_rating}</span>
-                                                                                            </div>
-                                                                                    </td>
-                                                                                    <td className="px-6 py-4">
-                                                                                            <span className="text-sm font-black text-emerald-600">₹{doc.total_earned.toLocaleString()}</span>
-                                                                                    </td>
-                                                                                    <td className="px-6 py-4">
-                                                                                            <span className={`text-xs font-black ${doc.no_show_rate > 15 ? 'text-rose-500' : 'text-gray-400'}`}>{doc.no_show_rate}%</span>
-                                                                                    </td>
-                                                                            </tr>
-                                                                    ))}
-                                                             </tbody>
-                                                     </table>
+                                                                                            </td>
+                                                                                            <td className="px-6 py-4 font-medium text-gray-600">
+                                                                                                    <div className="flex flex-col">
+                                                                                                            <span className="text-sm">{doc.total_appointments} total</span>
+                                                                                                            <span className="text-[10px] text-gray-400">{Math.round(doc.total_appointments * (doc.completion_rate/100))} completed</span>
+                                                                                                    </div>
+                                                                                            </td>
+                                                                                            <td className="px-6 py-4">
+                                                                                                    <div className="flex items-center gap-2">
+                                                                                                            <div className="flex-1 h-1 bg-gray-100 rounded-full max-w-[60px] overflow-hidden">
+                                                                                                                    <div className={`h-full rounded-full ${compColor}`} style={{ width: `${doc.completion_rate}%` }}></div>
+                                                                                                            </div>
+                                                                                                            <span className="text-xs font-black text-gray-900">{doc.completion_rate}%</span>
+                                                                                                    </div>
+                                                                                            </td>
+                                                                                            <td className="px-6 py-4">
+                                                                                                    <div className={`flex items-center gap-1 ${ratingColor}`}>
+                                                                                                            <StarIcon className="h-4 w-4 fill-current" />
+                                                                                                            <span className="text-xs font-black">{doc.avg_rating}</span>
+                                                                                                    </div>
+                                                                                            </td>
+                                                                                            <td className="px-6 py-4">
+                                                                                                    <span className="text-sm font-black text-gray-900">₹{doc.total_earned.toLocaleString()}</span>
+                                                                                            </td>
+                                                                                            <td className="px-6 py-4 text-right">
+                                                                                                    <div className="flex flex-col items-end">
+                                                                                                            <span className={`text-xs font-black ${noShowColor}`}>{doc.no_show_rate}%</span>
+                                                                                                            <span className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Rate</span>
+                                                                                                    </div>
+                                                                                            </td>
+                                                                                    </tr>
+                                                                            );
+                                                                    })}
+                                                            </tbody>
+                                                    </table>
                                             </div>
                                     </div>
                              </div>

@@ -1,4 +1,5 @@
 const supabase = require('../config/supabase');
+const { calculateBMI, getDietRecommendations } = require('../utils/bmiCalculator');
 
 // POST /api/health-metrics
 const logHealthMetric = async (req, res) => {
@@ -153,8 +154,27 @@ const getHealthSummary = async (req, res) => {
   }
 };
 
+// POST /api/health-metrics/bmi
+const calculateBMIEp = async (req, res) => {
+  const { weight_kg, height_cm, activity_level = 'moderate', age = 30 } = req.body;
+  if (!weight_kg || !height_cm) {
+    return res.status(400).json({ error: 'Weight (kg) and Height (cm) are required' });
+  }
+
+  const result = calculateBMI(weight_kg, height_cm);
+  if (!result) return res.status(400).json({ error: 'Calculation failed' });
+
+  const recommendations = getDietRecommendations(result.category, age, activity_level);
+
+  res.status(200).json({
+    ...result,
+    recommendations
+  });
+};
+
 module.exports = {
   logHealthMetric,
   getHealthMetrics,
-  getHealthSummary
+  getHealthSummary,
+  calculateBMIEp
 };

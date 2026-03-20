@@ -106,25 +106,25 @@ const Doctors = () => {
                      {/* Header Section */}
                      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-4">
                             <div>
-                                   <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Find Specialists</h1>
-                                   <p className="text-gray-500 mt-2 font-medium">Book appointments with top-rated medical professionals in your area.</p>
+                                   <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Find Specialists</h1>
+                                   <p className="text-gray-500 mt-2 font-medium text-sm md:text-base">Book appointments with top-rated medical professionals in your area.</p>
                             </div>
-                            <div className="flex items-center gap-4 bg-gray-100/50 p-2 rounded-2xl border border-gray-100">
+                            <div className="flex items-center gap-3 bg-gray-100/50 p-1.5 rounded-2xl border border-gray-100 overflow-x-auto no-scrollbar">
                                    <button
                                           onClick={() => setFilters({ ...filters, sort: 'rating' })}
-                                          className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${filters.sort === 'rating' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500'}`}
+                                          className={`px-4 md:px-6 py-2 rounded-xl text-[10px] md:text-sm font-bold transition-all whitespace-nowrap ${filters.sort === 'rating' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500'}`}
                                    >
                                           Top Rated
                                    </button>
                                    <button
                                           onClick={() => setFilters({ ...filters, sort: 'fees' })}
-                                          className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${filters.sort === 'fees' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500'}`}
+                                          className={`px-4 md:px-6 py-2 rounded-xl text-[10px] md:text-sm font-bold transition-all whitespace-nowrap ${filters.sort === 'fees' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500'}`}
                                    >
                                           Lowest Fee
                                    </button>
                                    <button
                                           onClick={() => setFilters({ ...filters, sort: 'experience' })}
-                                          className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${filters.sort === 'experience' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500'}`}
+                                          className={`px-4 md:px-6 py-2 rounded-xl text-[10px] md:text-sm font-bold transition-all whitespace-nowrap ${filters.sort === 'experience' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500'}`}
                                    >
                                           Experience
                                    </button>
@@ -144,12 +144,12 @@ const Doctors = () => {
                                           </div>
                                    </div>
 
-                                   <div className="flex overflow-x-auto gap-8 pb-8 no-scrollbar -mx-4 px-4 scroll-smooth">
+                                   <div className="flex overflow-x-auto gap-4 md:gap-8 pb-8 no-scrollbar -mx-4 px-4 scroll-smooth">
                                           {featuredDoctors.map(doctor => (
                                                  <div
                                                         key={doctor.id}
                                                         onClick={() => navigate(`/doctors/${doctor.id}`)}
-                                                        className="flex-none w-[340px] bg-white rounded-3xl border border-indigo-100 p-8 shadow-sm hover:shadow-2xl hover:shadow-indigo-100 transition-all cursor-pointer group relative overflow-hidden"
+                                                        className="flex-none w-[280px] md:w-[340px] bg-white rounded-3xl border border-indigo-100 p-6 md:p-8 shadow-sm hover:shadow-2xl hover:shadow-indigo-100 transition-all cursor-pointer group relative overflow-hidden"
                                                  >
                                                         <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
                                                                <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
@@ -363,10 +363,14 @@ const Doctors = () => {
                                                                                     {doctor.is_verified && (
                                                                                            <div className={`absolute -bottom-1 -right-1 text-white p-0.5 rounded-full border-2 border-white shadow-sm ${
                                                                                                doctor.doctor_subscriptions?.find(s => s.status === 'active')?.plan?.badge_type === 'platinum' ? 'bg-indigo-600' :
-                                                                                               doctor.doctor_subscriptions?.find(s => s.status === 'active')?.plan?.badge_type === 'gold' ? 'bg-yellow-500' :
+                                                                                               doctor.doctor_subscriptions?.find(s => s.status === 'active')?.plan?.badge_type === 'gold' ? 'bg-amber-400' :
                                                                                                'bg-blue-500'
                                                                                            }`}>
-                                                                                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745a3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" /></svg>
+                                                                                                  {doctor.doctor_subscriptions?.find(s => s.status === 'active')?.plan?.badge_type === 'platinum' ? (
+                                                                                                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2l2.5 5h5.5l-4.5 3.5 1.5 5.5-5-4-5 4 1.5-5.5-4.5-3.5h5.5z"/></svg>
+                                                                                                  ) : (
+                                                                                                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745a3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" /></svg>
+                                                                                                  )}
                                                                                            </div>
                                                                                     )}
                                                                              </div>

@@ -169,9 +169,9 @@ const DoctorDashboard = () => {
     });
 
     return (
-        <div className="max-w-7xl mx-auto space-y-10 pb-20 px-4">
+        <div className="max-w-7xl mx-auto space-y-6 md:space-y-10 pb-20 px-4 md:px-6">
             {/* Header / Identity */}
-            <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-10">
+            <div className="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6 md:gap-10">
                 <div className="flex items-center gap-8">
                     <div className="relative group">
                         <AvatarUpload
@@ -196,28 +196,28 @@ const DoctorDashboard = () => {
                         <p className="text-gray-500 font-bold text-lg mt-1">{profile.specialty || 'General Practitioner'} • {profile.experience || 0} Years Experience</p>
                     </div>
                 </div>
-                <div className="flex flex-wrap justify-center gap-4">
-                    <button onClick={() => navigate('/security')} className="bg-white text-gray-600 border-2 border-gray-100 px-6 py-3 rounded-2xl font-black hover:bg-gray-50 transition-all text-xs uppercase tracking-widest">Security</button>
-                    <button onClick={() => navigate('/payments/history')} className="bg-white text-indigo-600 border-2 border-indigo-100 px-6 py-3 rounded-2xl font-black hover:bg-indigo-50 transition-all text-xs uppercase tracking-widest">Income</button>
-                    <div className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${user?.doctorDetails?.is_approved ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
-                        <div className={`w-2 h-2 rounded-full ${user?.doctorDetails?.is_approved ? 'bg-green-500' : 'bg-yellow-400'} animate-pulse`}></div>
+                <div className="flex flex-wrap justify-center gap-3 md:gap-4">
+                    <button onClick={() => navigate('/security')} className="flex-1 md:flex-none bg-white text-gray-600 border border-gray-100 px-4 md:px-6 py-2.5 md:py-3 rounded-xl md:rounded-2xl font-black hover:bg-gray-50 transition-all text-[10px] uppercase tracking-widest whitespace-nowrap">Security</button>
+                    <button onClick={() => navigate('/payments/history')} className="flex-1 md:flex-none bg-white text-indigo-600 border border-indigo-100 px-4 md:px-6 py-2.5 md:py-3 rounded-xl md:rounded-2xl font-black hover:bg-indigo-50 transition-all text-[10px] uppercase tracking-widest whitespace-nowrap">Income</button>
+                    <div className={`flex-1 md:flex-none px-4 md:px-6 py-2.5 md:py-3 rounded-xl md:rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 ${user?.doctorDetails?.is_approved ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
+                        <div className={`w-1.5 md:w-2 h-1.5 md:h-2 rounded-full ${user?.doctorDetails?.is_approved ? 'bg-green-500' : 'bg-yellow-400'} animate-pulse`}></div>
                         {user?.doctorDetails?.is_approved ? 'Active' : 'Pending'}
                     </div>
                 </div>
             </div>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 {[
                     { label: 'Total Revenue', value: `₹${stats.totalRevenue}`, icon: '💰', color: 'from-green-50 to-emerald-50', textColor: 'text-green-700' },
                     { label: 'Pending Requests', value: stats.pendingCount, icon: '⏳', color: 'from-orange-50 to-amber-50', textColor: 'text-orange-700' },
                     { label: "Today's Visits", value: stats.todayCount, icon: '📅', color: 'from-blue-50 to-indigo-50', textColor: 'text-blue-700' },
                     { label: 'Success Rate', value: '98%', icon: '📈', color: 'from-purple-50 to-fuchsia-50', textColor: 'text-purple-700' },
                 ].map((s, i) => (
-                    <div key={i} className={`bg-gradient-to-br ${s.color} p-8 rounded-[2rem] border border-white shadow-sm hover:shadow-md transition-all group`}>
-                        <div className="text-3xl mb-4 group-hover:scale-110 transition-transform">{s.icon}</div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{s.label}</p>
-                        <p className={`text-3xl font-black ${s.textColor} mt-1`}>{s.value}</p>
+                    <div key={i} className={`bg-gradient-to-br ${s.color} p-5 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-white shadow-sm hover:shadow-md transition-all group`}>
+                        <div className="text-2xl md:text-3xl mb-3 md:mb-4 group-hover:scale-110 transition-transform">{s.icon}</div>
+                        <p className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest">{s.label}</p>
+                        <p className={`text-xl md:text-3xl font-black ${s.textColor} mt-1`}>{s.value}</p>
                     </div>
                 ))}
             </div>
@@ -247,21 +247,21 @@ const DoctorDashboard = () => {
 
                     {/* Main Appointments Section */}
                     <div className="space-y-6">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-2">
-                             <div className="flex gap-8">
+                        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 pb-2">
+                             <div className="flex gap-4 md:gap-8 overflow-x-auto no-scrollbar pb-2 md:pb-0">
                                     {['active', 'pending', 'history'].map((tab) => (
                                            <button
                                                   key={tab}
                                                   onClick={() => setActiveTab(tab)}
-                                                  className={`pb-4 px-2 text-sm font-black uppercase tracking-widest transition-all relative ${activeTab === tab ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
+                                                  className={`pb-3 md:pb-4 px-1 md:px-2 text-[10px] md:text-sm font-black uppercase tracking-widest transition-all relative whitespace-nowrap ${activeTab === tab ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
                                            >
                                                   {tab}
                                                   {activeTab === tab && <div className="absolute bottom-0 left-0 w-full h-1 bg-indigo-600 rounded-full" />}
                                            </button>
                                     ))}
                              </div>
-                             <button onClick={fetchData} className="p-2 hover:bg-gray-100 rounded-full transition-colors self-end md:self-auto text-gray-400">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                             <button onClick={fetchData} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 124 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                              </button>
                         </div>
 

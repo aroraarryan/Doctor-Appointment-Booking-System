@@ -41,42 +41,30 @@ const subscribe = async (req, res) => {
             return res.status(404).json({ error: 'Subscription plan not found' });
         }
 
-        // 2. Note: In a real app, you'd create Razorpay Plans beforehand or dynamically.
-        // For this demo, we assume we have Razorpay Plan IDs or we use a hosted payment link approach.
-        // However, the prompt asks for razorpay.subscriptions.create.
-        // We'll use a placeholder Razorpay Plan ID for now or assume it's stored in our DB.
-        
-        // Let's check if there's a razorpay_plan_id in our subscription_plans table. 
-        // We might need to add it if we want to use the automated API.
-        
-        // For now, let's proceed with the requirement as stated.
-        // const subscription = await razorpay.subscriptions.create({
-        //     plan_id: plan.razorpay_plan_id, // Need this!
-        //     total_count: billing_cycle === 'yearly' ? 1 : 12,
-        //     quantity: 1,
-        //     customer_notify: 1
-        // });
-
-        // Since we don't have real Razorpay Plan IDs, I'll simulate the creation 
-        // to show the flow, or better, I'll allow the doctor to see the plans 
-        // and we'll handle the actual Razorpay Subscription Creation logic 
-        // assuming plan IDs exist in env or DB.
-
-        // MOCK for now if no real Plan IDs
+        // 2. MOCK for now
         const mockSubscriptionId = `sub_${Math.random().toString(36).substr(2, 9)}`;
+        const days = billing_cycle === 'yearly' ? 365 : 30;
+        const periodEnd = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
         
+        // Immediately set to active in mock mode
         const { error: subError } = await supabase
             .from('doctor_subscriptions')
             .insert([{
                 doctor_id: doctorId,
                 plan_id: plan_id,
                 razorpay_subscription_id: mockSubscriptionId,
-                status: 'pending',
+                status: 'active',
                 current_period_start: new Date().toISOString(),
-                current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+                current_period_end: periodEnd
             }]);
 
         if (subError) throw subError;
+
+        // Update doctor profile with badge immediately
+        await supabase
+            .from('doctors')
+            .update({ verification_badge: plan.badge_type })
+            .eq('id', doctorId);
 
         res.status(200).json({ 
             subscriptionId: mockSubscriptionId, 

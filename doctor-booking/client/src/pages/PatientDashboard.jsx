@@ -96,62 +96,61 @@ const PatientDashboard = () => {
        const past = appointments.filter(a => ['completed', 'cancelled'].includes(a.status));
 
        return (
-              <div className="max-w-6xl mx-auto space-y-12 pb-20">
-                     <div className="bg-white p-10 rounded-3xl shadow-md border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-10">
+               <div className="max-w-6xl mx-auto space-y-8 md:space-y-12 pb-20 px-4 md:px-0">
+                       <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col xl:flex-row justify-between items-center gap-8">
                             <div className="flex items-center gap-8">
                                    <AvatarUpload
                                           currentAvatar={user?.avatar_url}
                                           onUploadSuccess={() => window.location.reload()}
                                    />
-                                   <div>
-                                          <h1 className="text-3xl font-extrabold text-gray-900">Health Dashboard</h1>
-                                          <p className="text-gray-500 font-medium text-lg mt-1">Hello, {user?.name.split(' ')[0]}! Ready for your checkup?</p>
-                                   </div>
-                            </div>
-                            
-                     <div className="flex flex-wrap gap-4 w-full md:w-auto">
-                            <button
-                                   onClick={() => navigate('/waitlist')}
-                                   className="flex-1 md:flex-none bg-blue-50 text-blue-600 border-2 border-blue-100 px-8 py-3 rounded-2xl font-bold hover:bg-blue-100 transition-all shadow-sm"
-                            >
-                                   My Waitlists
-                            </button>
-
-                                   <button
-                                          onClick={() => navigate('/security')}
-                                          className="flex-1 md:flex-none bg-white text-gray-600 border-2 border-gray-100 px-8 py-3 rounded-2xl font-bold hover:bg-gray-50 transition-all shadow-sm"
-                                   >
-                                          Security
-                                   </button>
-                                   <button
-                                          onClick={() => navigate('/payments/history')}
-                                          className="flex-1 md:flex-none bg-white text-indigo-600 border-2 border-indigo-100 px-8 py-3 rounded-2xl font-bold hover:bg-indigo-50 transition-all shadow-sm"
-                                   >
-                                          Payments
-                                   </button>
-                                    <button
-                                           onClick={() => navigate('/health')}
-                                           className="flex-1 md:flex-none bg-indigo-50 text-indigo-600 border-2 border-indigo-100 px-8 py-3 rounded-2xl font-bold hover:bg-indigo-100 transition-all shadow-sm"
-                                    >
-                                           Health Tools
-                                    </button>
-                                   <button
-                                          onClick={() => navigate('/doctors')}
-                                          className="flex-1 md:flex-none bg-indigo-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
-                                   >
-                                          Book New
-                                   </button>
-                            </div>
+                                    <div className="text-center md:text-left">
+                                           <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900">Health Dashboard</h1>
+                                           <p className="text-gray-500 font-medium text-base md:text-lg mt-1">Hello, {user?.name.split(' ')[0]}! Ready for your checkup?</p>
+                                    </div>
+                             </div>
+                             
+                       <div className="flex flex-wrap justify-center xl:justify-end gap-2 md:gap-3 w-full xl:w-auto">
+                             <button
+                                    onClick={() => navigate('/waitlist')}
+                                    className="flex-1 sm:flex-none bg-blue-50 text-blue-600 border-2 border-blue-100 px-4 md:px-6 py-2.5 rounded-2xl font-bold hover:bg-blue-100 transition-all shadow-sm text-sm"
+                             >
+                                    My Waitlists
+                             </button>
+                             <button
+                                    onClick={() => navigate('/security')}
+                                    className="flex-1 sm:flex-none bg-white text-gray-600 border-2 border-gray-100 px-4 md:px-6 py-2.5 rounded-2xl font-bold hover:bg-gray-50 transition-all shadow-sm text-sm"
+                             >
+                                    Security
+                             </button>
+                             <button
+                                    onClick={() => navigate('/payments/history')}
+                                    className="flex-1 sm:flex-none bg-white text-indigo-600 border-2 border-indigo-100 px-4 md:px-6 py-2.5 rounded-2xl font-bold hover:bg-indigo-50 transition-all shadow-sm text-sm"
+                             >
+                                    Payments
+                             </button>
+                             <button
+                                    onClick={() => navigate('/health')}
+                                    className="flex-1 sm:flex-none bg-indigo-50 text-indigo-600 border-2 border-indigo-100 px-4 md:px-6 py-2.5 rounded-2xl font-bold hover:bg-indigo-100 transition-all shadow-sm text-sm"
+                             >
+                                    Health Tools
+                             </button>
+                             <button
+                                    onClick={() => navigate('/doctors')}
+                                    className="flex-1 sm:flex-none bg-indigo-600 text-white px-6 md:px-8 py-2.5 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 text-sm"
+                             >
+                                    Book New
+                             </button>
+                      </div>
                      </div>
 
                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                             {/* Medical Records Section */}
                             <div className="lg:col-span-2 space-y-6">
-                                   <h2 className="text-2xl font-extrabold text-gray-900 flex items-center gap-3">
-                                          <div className="w-2 h-8 bg-indigo-600 rounded-full"></div>
-                                          Digital Health Vault
-                                   </h2>
-                                   <div className="grid grid-cols-1 md:grid-cols-12 gap-10 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm transition-all duration-300">
+                                    <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 flex items-center gap-3">
+                                           <div className="w-1.5 md:w-2 h-6 md:h-8 bg-indigo-600 rounded-full"></div>
+                                           Digital Health Vault
+                                    </h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10 bg-white p-5 md:p-8 rounded-3xl border border-gray-100 shadow-sm transition-all duration-300">
                                           <div className="md:col-span-4 bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-200">
                                                  <h3 className="text-sm font-bold text-gray-400 mb-4 uppercase tracking-widest">New Entry</h3>
                                                  <MedicalRecordUpload onUploadSuccess={fetchRecords} />
@@ -168,18 +167,18 @@ const PatientDashboard = () => {
 
                             {/* Upcoming Appointments */}
                             <div className="space-y-6">
-                                   <h2 className="text-2xl font-extrabold text-gray-900 flex items-center gap-3">
-                                          <div className="w-2 h-8 bg-indigo-600 rounded-full"></div>
-                                          Upcoming Visits
-                                   </h2>
-                                   {loading ? (
-                                          <div className="space-y-4">
-                                                 <SkeletonCard count={2} />
-                                          </div>
-                                   ) : upcoming.length > 0 ? (
-                                          <div className="space-y-6">
-                                                 {upcoming.map(app => (
-                                                        <div key={app.id} className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex items-start sm:items-center gap-6 group relative overflow-hidden">
+                                    <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 flex items-center gap-3">
+                                           <div className="w-1.5 md:w-2 h-6 md:h-8 bg-indigo-600 rounded-full"></div>
+                                           Upcoming Visits
+                                    </h2>
+                                    {loading ? (
+                                           <div className="space-y-4">
+                                                  <SkeletonCard count={2} />
+                                           </div>
+                                    ) : upcoming.length > 0 ? (
+                                           <div className="space-y-4 md:space-y-6">
+                                                  {upcoming.map(app => (
+                                                         <div key={app.id} className="bg-white p-5 md:p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col sm:flex-row items-center gap-5 md:gap-6 group relative overflow-hidden text-center sm:text-left">
                                                                <div className={`absolute top-0 left-0 w-1.5 h-full ${app.status === 'confirmed' ? 'bg-green-500' : 'bg-yellow-400'}`}></div>
                                                                <div className="w-16 h-16 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl flex items-center justify-center text-indigo-600 font-extrabold text-2xl group-hover:scale-110 transition-transform">
                                                                       {app.doctor.profile.name.charAt(0)}

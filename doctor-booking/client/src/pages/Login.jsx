@@ -120,7 +120,7 @@ const Login = () => {
 
        if (requires2FA) {
               return (
-                     <div className="max-w-md mx-auto mt-10 bg-white p-8 border border-gray-200 rounded-lg shadow-sm">
+                     <div className="max-w-md mx-auto mt-6 md:mt-12 bg-white p-6 md:p-8 border border-gray-200 rounded-2xl shadow-sm">
                             <h2 className="text-2xl font-bold text-center mb-2 text-indigo-600">Verification Required</h2>
                             <p className="text-gray-600 text-center mb-6">Enter the 6-digit code sent to your email</p>
                             
@@ -130,13 +130,13 @@ const Login = () => {
                             )}
 
                             <form onSubmit={handleOTPSubmit} className="space-y-6">
-                                   <div className="flex justify-between gap-2">
+                                   <div className="flex justify-between gap-1 md:gap-2">
                                           {otp.map((data, index) => (
                                                  <input
                                                         key={index}
                                                         type="text"
                                                         maxLength="1"
-                                                        className="w-12 h-12 text-center border-2 border-gray-300 rounded-lg text-xl font-bold focus:border-indigo-500 focus:outline-none"
+                                                        className="w-10 h-10 md:w-12 md:h-12 text-center border-2 border-gray-300 rounded-lg text-lg md:text-xl font-bold focus:border-indigo-500 focus:outline-none"
                                                         value={data}
                                                         onChange={(e) => handleOtpChange(e.target, index)}
                                                         onKeyDown={(e) => handleKeyDown(e, index)}
@@ -176,7 +176,7 @@ const Login = () => {
        }
 
        return (
-              <div className="max-w-md mx-auto mt-10 bg-white p-8 border border-gray-200 rounded-lg shadow-sm">
+              <div className="max-w-md mx-auto mt-6 md:mt-12 bg-white p-6 md:p-8 border border-gray-200 rounded-2xl shadow-sm">
                      <h2 className="text-2xl font-bold text-center mb-6 text-indigo-600">Login to DocBook</h2>
                      {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
                      <form onSubmit={handleLoginSubmit} className="space-y-4">

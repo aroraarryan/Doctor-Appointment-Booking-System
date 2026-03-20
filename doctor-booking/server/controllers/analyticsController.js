@@ -285,15 +285,16 @@ const getAdminAnalytics = async (req, res) => {
         }
         const avgGrowth = growthRates.length > 0 ? growthRates.reduce((a, b) => a + b) / growthRates.length : 0.05;
         
-        const forecasting = Array.from({ length: 3 }).map((_, i) => {
-            const lastRev = i === 0 ? monthlyRevenue[5] : forecasting[i-1].projected_revenue;
+        const forecasting = [];
+        for (let i = 0; i < 3; i++) {
+            const lastRev = i === 0 ? monthlyRevenue[5] : forecasting[i - 1].projected_revenue;
             const projected = Math.round(lastRev * (1 + avgGrowth));
-            return {
+            forecasting.push({
                 month: format(startOfMonth(subMonths(new Date(), -1 - i)), 'MMM'),
                 projected_revenue: projected,
                 confidence: avgGrowth > 0.3 ? 'low' : 'high'
-            };
-        });
+            });
+        }
 
         // Doctor Performance
         const { data: docStats, error: docError } = await supabase.from('doctor_analytics').select(`

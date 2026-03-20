@@ -15,6 +15,17 @@ const createOTP = async (userId, email, type) => {
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 10);
 
+    // Rate limiting: 3 OTPs per 15 minutes
+    const { count } = await supabase
+        .from('otp_verifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', new Date(Date.now() - 15 * 60 * 1000).toISOString());
+
+    if (count >= 3) {
+        throw new Error('OTP rate limit exceeded. Try again in 15 minutes.');
+    }
+
     const { error } = await supabase
         .from('otp_verifications')
         .insert([{

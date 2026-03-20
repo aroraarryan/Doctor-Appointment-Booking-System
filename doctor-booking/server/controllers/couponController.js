@@ -93,8 +93,38 @@ const getCoupons = async (req, res) => {
     }
 };
 
+// GET /api/admin/coupon-stats
+const getCouponStats = async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('coupons')
+            .select('discount_value, used_count, discount_type');
+
+        if (error) throw error;
+
+        const totalCoupons = data.length;
+        const totalRedemptions = data.reduce((sum, c) => sum + (c.used_count || 0), 0);
+        
+        // This is an estimate as exact transaction values aren't linked here
+        const estTotalDiscount = data.reduce((sum, c) => {
+            if (c.discount_type === 'fixed') return sum + (c.discount_value * c.used_count);
+            return sum; // Partial estimate for fixed only
+        }, 0);
+
+        res.status(200).json({
+            totalCoupons,
+            totalRedemptions,
+            estTotalDiscount
+        });
+    } catch (error) {
+        console.error('Get Coupon Stats Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     createCoupon,
     validateCoupon,
-    getCoupons
+    getCoupons,
+    getCouponStats
 };

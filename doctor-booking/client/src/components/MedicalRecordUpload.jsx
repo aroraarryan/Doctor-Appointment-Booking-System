@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { XCircleIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 
 const MedicalRecordUpload = ({ onUploadSuccess }) => {
        const [file, setFile] = useState(null);
@@ -7,6 +8,8 @@ const MedicalRecordUpload = ({ onUploadSuccess }) => {
        const [selectedAppointment, setSelectedAppointment] = useState('');
        const [uploading, setUploading] = useState(false);
        const [dragActive, setDragActive] = useState(false);
+       const [error, setError] = useState('');
+       const [success, setSuccess] = useState(false);
 
        useEffect(() => {
               const fetchAppointments = async () => {
@@ -30,17 +33,40 @@ const MedicalRecordUpload = ({ onUploadSuccess }) => {
               }
        };
 
+       const handleFileSelect = (selectedFile) => {
+              setError('');
+              setSuccess(false);
+              if (!selectedFile) return;
+
+              if (selectedFile.size > 10 * 1024 * 1024) {
+                     setError('File size must be less than 10MB.');
+                     setFile(null);
+                     return;
+              }
+
+              const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+              if (!allowedTypes.includes(selectedFile.type)) {
+                     setError('Invalid file type. Please upload a PDF or an image (JPG, PNG, WebP).');
+                     setFile(null);
+                     return;
+              }
+
+              setFile(selectedFile);
+       };
+
        const handleDrop = (e) => {
               e.preventDefault();
               e.stopPropagation();
               setDragActive(false);
               if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                     setFile(e.dataTransfer.files[0]);
+                     handleFileSelect(e.dataTransfer.files[0]);
               }
        };
 
        const handleUpload = async () => {
               if (!file) return;
+              setError('');
+              setSuccess(false);
 
               setUploading(true);
               const formData = new FormData();
@@ -53,12 +79,13 @@ const MedicalRecordUpload = ({ onUploadSuccess }) => {
                      const { data } = await api.post('/upload/medical-record', formData, {
                             headers: { 'Content-Type': 'multipart/form-data' }
                      });
-                     alert('Medical record uploaded successfully!');
+                     setSuccess(true);
                      setFile(null);
                      setSelectedAppointment('');
                      if (onUploadSuccess) onUploadSuccess(data);
+                     setTimeout(() => setSuccess(false), 5000);
               } catch (error) {
-                     alert('Upload failed: ' + (error.response?.data?.error || error.message));
+                     setError('Upload failed: ' + (error.response?.data?.error || error.message));
               } finally {
                      setUploading(false);
               }
@@ -67,6 +94,20 @@ const MedicalRecordUpload = ({ onUploadSuccess }) => {
        return (
               <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-4">
                      <h3 className="font-bold text-gray-800">Upload Medical Record</h3>
+
+                     {error && (
+                            <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-lg flex items-center gap-2 text-sm">
+                                   <XCircleIcon className="h-5 w-5 flex-shrink-0" />
+                                   <span>{error}</span>
+                            </div>
+                     )}
+
+                     {success && (
+                            <div className="bg-green-50 border border-green-100 text-green-600 px-4 py-3 rounded-lg flex items-center gap-2 text-sm">
+                                   <CheckCircleIcon className="h-5 w-5 flex-shrink-0" />
+                                   <span>Medical record uploaded successfully!</span>
+                            </div>
+                     )}
 
                      <div
                             onDragEnter={handleDrag}
@@ -96,7 +137,7 @@ const MedicalRecordUpload = ({ onUploadSuccess }) => {
                                                  id="fileInput"
                                                  type="file"
                                                  className="hidden"
-                                                 onChange={(e) => setFile(e.target.files[0])}
+                                                 onChange={(e) => handleFileSelect(e.target.files[0])}
                                                  accept=".pdf,image/*"
                                           />
                                    </div>

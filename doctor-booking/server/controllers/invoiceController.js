@@ -27,10 +27,21 @@ const getMyInvoices = async (req, res) => {
 const getInvoicePDF = async (req, res) => {
     const { id } = req.params;
     try {
-        // In a real app, generate PDF via puppeteer or report-engine
-        // For now, we'll return a mock URL
-        const pdfUrl = `https://storage.googleapis.com/doctor-booking-invoices/invoice-${id.substring(0,8)}.pdf`;
-        res.status(200).json({ pdfUrl });
+        const { data: invoice, error } = await supabase
+            .from('invoices')
+            .select('pdf_url')
+            .eq('id', id)
+            .single();
+
+        if (error || !invoice) {
+            return res.status(404).json({ error: 'Invoice not found' });
+        }
+
+        if (!invoice.pdf_url) {
+            return res.status(404).json({ error: 'Invoice PDF not yet generated' });
+        }
+
+        res.status(200).json({ pdfUrl: invoice.pdf_url });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
