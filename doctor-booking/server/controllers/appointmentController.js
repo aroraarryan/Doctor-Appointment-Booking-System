@@ -21,7 +21,7 @@ const bookAppointment = async (req, res) => {
               // 1. Verification and validation
               const { data: doctor, error: doctorError } = await supabase
                      .from('doctors')
-                     .select('is_approved, buffer_time_mins')
+                     .select('is_approved, buffer_time_mins, fees')
                      .eq('id', doctor_id)
                      .single();
 
@@ -30,6 +30,7 @@ const bookAppointment = async (req, res) => {
               }
 
               const bufferMins = doctor.buffer_time_mins || 0;
+              const docFees = doctor.fees || 0;
 
               // 2. Prepare list of slots to book
               const appointmentDates = [];
@@ -77,7 +78,8 @@ const bookAppointment = async (req, res) => {
                             notes,
                             status: 'pending',
                             is_recurring,
-                            recurrence_pattern: is_recurring ? recurrence_pattern : null
+                            recurrence_pattern: is_recurring ? recurrence_pattern : null,
+                            fees: docFees
                      });
               }
 
@@ -146,12 +148,13 @@ const getDoctorAppointments = async (req, res) => {
        try {
               const { data, error } = await supabase
                      .from('appointments')
-                     .select(`
-                            *,
-                            patient:patient_id (name, avatar_url)
-                     `)
-                     .eq('doctor_id', req.user.id)
-                     .order('appointment_date', { ascending: false });
+                      .select(`
+                             *,
+                             patient:patient_id (name, avatar_url)
+                      `)
+                      .eq('doctor_id', req.user.id)
+                      .eq('doctor_hidden', false)
+                      .order('appointment_date', { ascending: false });
 
               if (error) throw error;
               res.status(200).json(data);
@@ -221,14 +224,19 @@ const cancelAppointment = async (req, res) => {
 
               if (getError) throw getError;
 
-              const { error } = await supabase
-                     .from('appointments')
-                     .delete()
-                     .eq('id', id)
-                     .eq('patient_id', req.user.id)
-                     .eq('status', 'pending'); // Only pending can be deleted
+               const { data, error } = await supabase
+                      .from('appointments')
+                      .update({ status: 'cancelled', cancelled_reason: 'patient_cancelled' })
+                      .eq('id', id)
+                      .eq('patient_id', req.user.id)
+                      .in('status', ['pending', 'confirmed']) // Allow cancelling pending or confirmed
+                      .select();
+               
+               if (error) throw error;
 
-              if (error) throw error;
+               if (!data || data.length === 0) {
+                      return res.status(400).json({ error: 'Appointment cannot be cancelled (it may already be cancelled, completed, or not yours)' });
+               }
 
               // Notify doctor
               await createNotification(
@@ -259,7 +267,8 @@ const rescheduleAppointment = async (req, res) => {
                             doctor:doctor_id (
                                    id,
                                    cancellation_policy_hours,
-                                   buffer_time_mins
+                                   buffer_time_mins,
+                                   fees
                             )
                      `)
                      .eq('id', id)
@@ -268,6 +277,11 @@ const rescheduleAppointment = async (req, res) => {
 
               if (getError || !appointment) {
                      return res.status(404).json({ error: 'Appointment not found' });
+              }
+
+              if (!appointment.doctor) {
+                     console.error('Doctor data missing for appointment:', appointment);
+                     return res.status(400).json({ error: 'Doctor information could not be retrieved' });
               }
 
               if (appointment.status !== 'pending' && appointment.status !== 'confirmed') {
@@ -312,7 +326,8 @@ const rescheduleAppointment = async (req, res) => {
                             time_slot: new_time_slot,
                             notes: appointment.notes,
                             status: 'pending',
-                            rescheduled_from: id
+                            rescheduled_from: id,
+                            fees: appointment.doctor.fees || 0
                      }])
                      .select()
                      .single();
@@ -343,6 +358,7 @@ const rescheduleAppointment = async (req, res) => {
 
               res.status(200).json(newAppointment);
        } catch (error) {
+              console.error('rescheduleAppointment Error:', error);
               res.status(400).json({ error: error.message });
        }
 };
@@ -402,6 +418,38 @@ const flagNoShow = async (req, res) => {
        }
 };
 
+// PATCH /api/appointments/:id/hide (doctor only)
+const hideAppointmentForDoctor = async (req, res) => {
+    const { id } = req.params;
+    console.log(`[Backend] Attempting to hide appointment ${id} for doctor ${req.user.id}`);
+
+    try {
+        const { data, error } = await supabase
+            .from('appointments')
+            .update({ doctor_hidden: true })
+            .eq('id', id)
+            .eq('doctor_id', req.user.id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[Backend] Supabase error hiding appointment:', error);
+            throw error;
+        }
+        
+        if (!data) {
+            console.log('[Backend] Appointment not found or already hidden');
+            return res.status(404).json({ error: 'Appointment not found' });
+        }
+
+        console.log('[Backend] Successfully hidden appointment:', id);
+        res.status(200).json({ message: 'Appointment hidden from dashboard', data });
+    } catch (error) {
+        console.error('[Backend] Catch block error:', error.message);
+        res.status(400).json({ error: error.message });
+    }
+};
+
 // Internal Helper for Reminder Scheduling
 const scheduleReminders = async (appointmentId, date, time) => {
     const appointmentTime = new Date(`${date}T${time}`);
@@ -442,5 +490,6 @@ module.exports = {
     updateStatus, 
     cancelAppointment,
     rescheduleAppointment,
-    flagNoShow
+    flagNoShow,
+    hideAppointmentForDoctor
 };

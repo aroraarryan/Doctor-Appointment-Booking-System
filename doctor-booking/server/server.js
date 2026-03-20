@@ -37,6 +37,10 @@ const verificationRoutes = require('./routes/verification');
 const sessionRoutes = require('./routes/sessions');
 const twofaRoutes = require('./routes/twofa');
 const waitlistRoutes = require('./routes/waitlist');
+const prescriptionRoutes = require('./routes/prescriptions');
+const medicalHistoryRoutes = require('./routes/medicalHistory');
+const labAnalysisRoutes = require('./routes/labAnalysis');
+const secondOpinionRoutes = require('./routes/secondOpinion');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
@@ -52,6 +56,10 @@ app.use('/api/verification', verificationRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/2fa', twofaRoutes);
 app.use('/api/waitlist', waitlistRoutes);
+app.use('/api/prescriptions', prescriptionRoutes);
+app.use('/api/medical-history', medicalHistoryRoutes);
+app.use('/api/lab-analysis', labAnalysisRoutes);
+app.use('/api/second-opinions', secondOpinionRoutes);
 
 app.get('/api/health', (req, res) => {
        res.status(200).json({ status: "OK", timestamp: new Date() });

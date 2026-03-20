@@ -7,7 +7,8 @@ const {
     updateStatus, 
     cancelAppointment,
     rescheduleAppointment,
-    flagNoShow
+    flagNoShow,
+    hideAppointmentForDoctor
 } = require('../controllers/appointmentController');
 const { verifyToken, requireRole } = require('../middleware/auth');
 
@@ -19,6 +20,7 @@ router.get('/doctor', requireRole('doctor'), getDoctorAppointments);
 router.patch('/:id/status', requireRole('doctor'), updateStatus);
 router.patch('/:id/reschedule', requireRole('patient'), rescheduleAppointment);
 router.patch('/:id/no-show', requireRole('doctor'), flagNoShow);
+router.patch('/:id/hide', requireRole('doctor'), hideAppointmentForDoctor);
 router.delete('/:id', requireRole('patient'), cancelAppointment);
 
 module.exports = router;

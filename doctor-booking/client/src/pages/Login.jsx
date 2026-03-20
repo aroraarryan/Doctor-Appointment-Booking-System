@@ -47,12 +47,9 @@ const Login = () => {
                             setRequires2FA(true);
                             setTempToken(data.tempToken);
                             setResendTimer(60);
-                     } else {
-                            const role = data.user.user_metadata?.role || 'patient';
-                            if (role === 'admin') navigate('/admin/dashboard');
-                            else if (role === 'doctor') navigate('/doctor/dashboard');
-                            else navigate('/dashboard');
                      }
+                     // Redirect is handled by the useEffect watching the `user` state
+                     // from AuthContext, which has the correct role from the profiles table.
               } catch (err) {
                      setError(err.response?.data?.error || 'Failed to login');
               } finally {

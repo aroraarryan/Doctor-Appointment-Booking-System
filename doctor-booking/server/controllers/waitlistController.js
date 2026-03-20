@@ -39,7 +39,10 @@ const joinWaitlist = async (req, res) => {
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Waitlist Insert Error:', error);
+            throw error;
+        }
 
         // 3. Get position in queue
         const { count, error: countError } = await supabase

@@ -49,12 +49,24 @@ const Navbar = () => {
                                           </Link>
                                           <div className="hidden md:flex items-center space-x-6">
                                                  <Link to="/doctors" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Find Doctors</Link>
-                                                 {user && (
-                                                        <>
-                                                               <Link to="/messages" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Messages</Link>
-                                                               <Link to="/payments/history" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Payments</Link>
-                                                        </>
-                                                 )}
+                                                  {user && user.role === 'patient' && (
+                                                         <>
+                                                                <Link to="/messages" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Messages</Link>
+                                                                <Link to="/payments/history" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Payments</Link>
+                                                                <Link to="/prescriptions" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Prescriptions</Link>
+                                                                <Link to="/medical-history" className="text-gray-600 hover:text-indigo-600 font-semibold transition">History</Link>
+                                                                <Link to="/second-opinion" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Opinion</Link>
+                                                         </>
+                                                  )}
+                                                  {user && user.role !== 'patient' && (
+                                                         <>
+                                                                {user.role === 'doctor' && (
+                                                                       <Link to="/doctor/second-opinion-requests" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Opinions</Link>
+                                                                )}
+                                                                <Link to="/messages" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Messages</Link>
+                                                                <Link to="/payments/history" className="text-gray-600 hover:text-indigo-600 font-semibold transition">Payments</Link>
+                                                         </>
+                                                  )}
                                           </div>
                                    </div>
 
@@ -123,8 +135,12 @@ const Navbar = () => {
                                    {user && (
                                           <>
                                                  <Link to="/messages" onClick={() => setShowMobileMenu(false)} className="block text-gray-600 font-bold py-2">Messages</Link>
-                                                 <Link to="/payments/history" onClick={() => setShowMobileMenu(false)} className="block text-gray-600 font-bold py-2">Payments</Link>
-                                                 <Link to={user.role === 'admin' ? '/admin/dashboard' : user.role === 'doctor' ? '/doctor/dashboard' : '/dashboard'} onClick={() => setShowMobileMenu(false)} className="block text-gray-600 font-bold py-2">Dashboard</Link>
+                                                  <Link to="/payments/history" onClick={() => setShowMobileMenu(false)} className="block text-gray-600 font-bold py-2">Payments</Link>
+                                                  {user.role === 'patient' && <Link to="/prescriptions" onClick={() => setShowMobileMenu(false)} className="block text-gray-600 font-bold py-2">Prescriptions</Link>}
+                                                  {user.role === 'patient' && <Link to="/medical-history" onClick={() => setShowMobileMenu(false)} className="block text-gray-600 font-bold py-2">Medical History</Link>}
+                                                  {user.role === 'patient' && <Link to="/second-opinion" onClick={() => setShowMobileMenu(false)} className="block text-gray-600 font-bold py-2">Second Opinion</Link>}
+                                                  {user.role === 'doctor' && <Link to="/doctor/second-opinion-requests" onClick={() => setShowMobileMenu(false)} className="block text-gray-600 font-bold py-2">Opinions</Link>}
+                                                  <Link to={user.role === 'admin' ? '/admin/dashboard' : user.role === 'doctor' ? '/doctor/dashboard' : '/dashboard'} onClick={() => setShowMobileMenu(false)} className="block text-gray-600 font-bold py-2">Dashboard</Link>
                                                  <button onClick={logout} className="w-full text-left text-red-600 font-bold py-2">Logout</button>
                                           </>
                                    )}

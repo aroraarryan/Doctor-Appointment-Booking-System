@@ -19,13 +19,13 @@ const createOrder = async (req, res) => {
               const { data: appointment, error: apptError } = await supabase
                      .from('appointments')
                      .select(`
-                *,
-                doctor:doctors (
-                    id,
-                    fees,
-                    profile:profiles (name)
-                )
-            `)
+                 *,
+                 doctor:doctors (
+                     id,
+                     fees,
+                     profile:profiles (name)
+                 )
+             `)
                      .eq('id', appointmentId)
                      .single();
 
@@ -34,7 +34,7 @@ const createOrder = async (req, res) => {
               }
 
               const doctorId = appointment.doctor_id;
-              const amount = appointment.doctor.fees;
+              const amount = appointment.fees ?? appointment.doctor.fees;
               const doctorName = appointment.doctor.profile.name;
 
               // 2. Create Razorpay order
@@ -154,6 +154,27 @@ const verifyPayment = async (req, res) => {
        }
 };
 
+// Internal Helper for local status updates
+const updateLocalStatus = async (appointmentId, paymentId) => {
+    // 1. Update Payment
+    const { error: payError } = await supabase.from('payments').update({ status: 'refunded' }).eq('id', paymentId);
+    if (payError) {
+        console.error('Local Status Update (Payment) Error:', payError);
+        throw payError;
+    }
+    
+    // 2. Update Appointment
+    const { error: apptError } = await supabase.from('appointments').update({ 
+        status: 'cancelled', 
+        payment_status: 'refunded',
+        cancelled_reason: 'refunded'
+    }).eq('id', appointmentId);
+    if (apptError) {
+        console.error('Local Status Update (Appointment) Error:', apptError);
+        throw apptError;
+    }
+};
+
 // POST /api/payments/refund
 const refundPayment = async (req, res) => {
        const { appointmentId } = req.body;
@@ -190,13 +211,11 @@ const refundPayment = async (req, res) => {
                      return res.status(400).json({ error: 'Payment record is missing internal Razorpay ID' });
               }
 
-              // 2. Call Razorpay refund API via direct HTTPS (Different Approach)
+              // 2. Call Razorpay refund API via direct HTTPS
               try {
                      const amountInPaise = Math.round(Number(payment.amount) * 100);
                      const auth = Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString('base64');
                      const postData = JSON.stringify({ amount: amountInPaise });
-
-                     console.log('Refund: Direct HTTPS request to Razorpay for ID:', payment.razorpay_payment_id, 'Amount:', amountInPaise);
 
                      const options = {
                             hostname: 'api.razorpay.com',
@@ -210,30 +229,21 @@ const refundPayment = async (req, res) => {
                             }
                      };
 
-                     const refundResponse = await new Promise((resolve, reject) => {
+                     await new Promise((resolve, reject) => {
                             const req = https.request(options, (res) => {
-                                   let data = '';
-                                   res.on('data', (chunk) => data += chunk);
+                                   res.on('data', () => {}); // Consume data to prevent hanging
                                    res.on('end', () => {
-                                          try {
-                                                 const d = JSON.parse(data);
-                                                 if (res.statusCode >= 200 && res.statusCode < 300) {
-                                                        resolve(d);
-                                                 } else {
-                                                        reject(d);
-                                                 }
-                                          } catch (e) {
-                                                 reject({ message: 'Invalid JSON response from Razorpay' });
+                                          if (res.statusCode >= 200 && res.statusCode < 300) {
+                                                 resolve();
+                                          } else {
+                                                 reject(new Error('Razorpay API Error'));
                                           }
                                    });
                             });
-
                             req.on('error', (e) => reject(e));
                             req.write(postData);
                             req.end();
                      });
-
-                     console.log('Refund: Direct HTTPS Success:', refundResponse.id);
 
                      // 3. Update database
                      await updateLocalStatus(appointmentId, payment.id);
@@ -258,9 +268,8 @@ const refundPayment = async (req, res) => {
                      return res.status(200).json({ success: true, message: 'Refund initiated successfully' });
 
               } catch (rzpError) {
-                     console.error('Refund: Direct HTTPS API error:', rzpError);
-                     const rzpMsg = rzpError.description || rzpError.reason || JSON.stringify(rzpError);
-                     return res.status(500).json({ error: `Razorpay API Error: ${rzpMsg}` });
+                     console.error('Refund: API error:', rzpError);
+                     return res.status(500).json({ error: `Refund processing failed.` });
               }
 
        } catch (error) {
@@ -278,15 +287,15 @@ const getPaymentHistory = async (req, res) => {
               let query = supabase
                      .from('payments')
                      .select(`
-                *,
-                appointment:appointments (
-                    appointment_date,
-                    time_slot,
-                    status
-                ),
-                patient:profiles!patient_id (name, email),
-                doctor:profiles!doctor_id (name, email)
-            `)
+                 *,
+                 appointment:appointments (
+                     appointment_date,
+                     time_slot,
+                     status
+                 ),
+                 patient:profiles!patient_id (name, email),
+                 doctor:profiles!doctor_id (name, email)
+             `)
                      .order('created_at', { ascending: false });
 
               if (role === 'patient') {
@@ -296,9 +305,7 @@ const getPaymentHistory = async (req, res) => {
               }
 
               const { data, error } = await query;
-
               if (error) throw error;
-
               res.status(200).json(data);
        } catch (error) {
               console.error('Payment History Error:', error);

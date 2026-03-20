@@ -55,10 +55,11 @@ const PatientDashboard = () => {
               if (window.confirm('Are you sure you want to cancel this appointment?')) {
                      try {
                             await api.delete(`/appointments/${id}`);
-                            setAppointments(appointments.filter(a => a.id !== id));
                             toast.success('Appointment cancelled.');
+                            fetchAppointments(); // Refresh from server to ensure sync
                      } catch (error) {
-                            toast.error('Failed to cancel appointment.');
+                            const message = error.response?.data?.error || 'Failed to cancel appointment.';
+                            toast.error(message);
                      }
               }
        };
@@ -70,20 +71,21 @@ const PatientDashboard = () => {
               }
               try {
                      await api.patch(`/appointments/${selectedAppointment.id}/reschedule`, {
-                            newDate: rescheduleData.date,
-                            newTime: rescheduleData.slot
+                            new_date: rescheduleData.date,
+                            new_time_slot: rescheduleData.slot
                      });
                      toast.success('Appointment rescheduled successfully!');
                      setShowRescheduleModal(false);
                      fetchAppointments();
               } catch (error) {
-                     toast.error(error.response?.data?.message || 'Failed to reschedule');
+                     const message = error.response?.data?.error || 'Failed to reschedule';
+                     toast.error(message);
               }
        };
 
        const fetchAvailableSlots = async (date, doctorId) => {
               try {
-                     const { data } = await api.get(`/appointments/slots?doctorId=${doctorId}&date=${date}`);
+                     const { data } = await api.get(`/availability/${doctorId}?date=${date}`);
                      setAvailableSlots(data);
               } catch (error) {
                      toast.error('Failed to fetch available slots');

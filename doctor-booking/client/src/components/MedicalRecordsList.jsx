@@ -1,17 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 import api from '../utils/api';
+import toast from 'react-hot-toast';
+import AIAnalysisModal from './AIAnalysisModal';
 
 const MedicalRecordsList = ({ records, onRefresh, canDelete = true }) => {
-       const handleDelete = async (id) => {
-              if (!window.confirm('Are you sure you want to delete this record?')) return;
-              try {
-                     await api.delete(`/upload/medical-record/${id}`);
-                     alert('Record deleted.');
-                     onRefresh();
-              } catch (error) {
-                     alert('Delete failed');
-              }
-       };
+        const [analyzingId, setAnalyzingId] = useState(null);
+        const [showAIModal, setShowAIModal] = useState(false);
+        const [selectedAnalysis, setSelectedAnalysis] = useState(null);
+
+        const handleDelete = async (id) => {
+               if (!window.confirm('Are you sure you want to delete this record?')) return;
+               try {
+                      await api.delete(`/upload/medical-record/${id}`);
+                      toast.success('Record deleted.');
+                      onRefresh();
+               } catch (error) {
+                      toast.error('Delete failed');
+               }
+        };
+
+        const handleAnalyze = async (recordId) => {
+               setAnalyzingId(recordId);
+               try {
+                      const { data } = await api.post('/lab-analysis/analyze', { recordId });
+                      setSelectedAnalysis(data.analysis_results);
+                      setShowAIModal(true);
+                      toast.success('AI Analysis complete!');
+               } catch (error) {
+                      const message = error.response?.data?.error || 'Analysis failed. Please try again.';
+                      toast.error(message);
+               } finally {
+                      setAnalyzingId(null);
+               }
+        };
 
        const getIcon = (type) => {
               if (type?.includes('pdf')) return '📕';
@@ -64,15 +85,22 @@ const MedicalRecordsList = ({ records, onRefresh, canDelete = true }) => {
                                                         >
                                                                View
                                                         </a>
-                                                        {canDelete && (
-                                                               <button
-                                                                      onClick={() => handleDelete(rec.id)}
-                                                                      className="text-red-500 font-bold hover:underline"
-                                                               >
-                                                                      Delete
-                                                               </button>
-                                                        )}
-                                                 </td>
+                                                         <button
+                                                                onClick={() => handleAnalyze(rec.id)}
+                                                                disabled={analyzingId === rec.id}
+                                                                className="text-purple-600 font-bold hover:underline disabled:opacity-50"
+                                                         >
+                                                                {analyzingId === rec.id ? 'Analyzing...' : 'AI Analyze'}
+                                                         </button>
+                                                         {canDelete && (
+                                                                <button
+                                                                       onClick={() => handleDelete(rec.id)}
+                                                                       className="text-red-500 font-bold hover:underline"
+                                                                >
+                                                                       Delete
+                                                                </button>
+                                                         )}
+                                                  </td>
                                           </tr>
                                    )) : (
                                           <tr>
@@ -83,6 +111,13 @@ const MedicalRecordsList = ({ records, onRefresh, canDelete = true }) => {
                                    )}
                             </tbody>
                      </table>
+
+                     {showAIModal && (
+                            <AIAnalysisModal
+                                   analysis={selectedAnalysis}
+                                   onClose={() => setShowAIModal(false)}
+                            />
+                     )}
               </div>
        );
 };

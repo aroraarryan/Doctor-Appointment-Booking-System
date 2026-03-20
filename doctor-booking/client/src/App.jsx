@@ -18,6 +18,10 @@ import { RealtimeProvider } from './context/RealtimeContext'
 import { Toaster } from 'react-hot-toast'
 import SecuritySettings from './pages/SecuritySettings'
 import MyWaitlist from './pages/MyWaitlist'
+import Prescriptions from './pages/Prescriptions';
+import MedicalHistory from './pages/MedicalHistory';
+import SecondOpinion from './pages/SecondOpinion';
+import SecondOpinionRequests from './pages/SecondOpinionRequests';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -67,11 +71,31 @@ function App() {
                                                                <SecuritySettings />
                                                         </PrivateRoute>
                                                  } />
-                                                 <Route path="/waitlist" element={
-                                                        <PrivateRoute>
-                                                               <RoleRoute allowedRoles={['patient']}><MyWaitlist /></RoleRoute>
-                                                        </PrivateRoute>
-                                                 } />
+                                                  <Route path="/waitlist" element={
+                                                         <PrivateRoute>
+                                                                <RoleRoute allowedRoles={['patient']}><MyWaitlist /></RoleRoute>
+                                                         </PrivateRoute>
+                                                  } />
+                                                  <Route path="/prescriptions" element={
+                                                         <PrivateRoute>
+                                                                <RoleRoute allowedRoles={['patient']}><Prescriptions /></RoleRoute>
+                                                         </PrivateRoute>
+                                                  } />
+                                                  <Route path="/medical-history" element={
+                                                         <PrivateRoute>
+                                                                <RoleRoute allowedRoles={['patient']}><MedicalHistory /></RoleRoute>
+                                                         </PrivateRoute>
+                                                  } />
+                                                  <Route path="/second-opinion" element={
+                                                         <PrivateRoute>
+                                                                <RoleRoute allowedRoles={['patient']}><SecondOpinion /></RoleRoute>
+                                                         </PrivateRoute>
+                                                  } />
+                                                  <Route path="/doctor/second-opinion-requests" element={
+                                                         <PrivateRoute>
+                                                                <RoleRoute allowedRoles={['doctor']}><SecondOpinionRequests /></RoleRoute>
+                                                         </PrivateRoute>
+                                                  } />
                                                  <Route path="*" element={<NotFound />} />
                                           </Routes>
                                    </div>
