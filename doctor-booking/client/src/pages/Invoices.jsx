@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import { FileText, Download, Calendar, ExternalLink, Search } from 'lucide-react';
 
 const Invoices = () => {
@@ -13,9 +13,7 @@ const Invoices = () => {
 
     const fetchInvoices = async () => {
         try {
-            const res = await axios.get('http://localhost:5002/api/invoices/my', {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
+            const res = await api.get('/invoices/my');
             setInvoices(res.data);
         } catch (error) {
             console.error('Error fetching invoices:', error);

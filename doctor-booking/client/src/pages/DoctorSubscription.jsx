@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import { Check, Shield, Zap, Award } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -15,10 +15,8 @@ const DoctorSubscription = () => {
     const fetchData = async () => {
         try {
             const [plansRes, subRes] = await Promise.all([
-                axios.get('http://localhost:5002/api/subscriptions/plans'),
-                axios.get('http://localhost:5002/api/subscriptions/my', {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                })
+                api.get('/subscriptions/plans'),
+                api.get('/subscriptions/my')
             ]);
             setPlans(plansRes.data);
             setMySub(subRes.data);
@@ -31,9 +29,8 @@ const DoctorSubscription = () => {
 
     const handleSubscribe = async (planId) => {
         try {
-            const res = await axios.post('http://localhost:5002/api/subscriptions/subscribe', 
-                { plan_id: planId, billing_cycle: 'monthly' },
-                { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+            const res = await api.post('/subscriptions/subscribe', 
+                { plan_id: planId, billing_cycle: 'monthly' }
             );
             
             // In a real Razorpay integration, you'd open the checkout here

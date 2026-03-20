@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { DollarSign, TrendingUp, Calendar, CreditCard, ArrowDownToLine, Download } from 'lucide-react';
+import api from '../utils/api';
+import { DollarSign, TrendingUp, Calendar, CreditCard, ArrowDownToLine, Download, CheckCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const EarningsDashboard = () => {
@@ -13,9 +13,7 @@ const EarningsDashboard = () => {
 
     const fetchEarnings = async () => {
         try {
-            const res = await axios.get('http://localhost:5002/api/earnings/stats', {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
+            const res = await api.get('/earnings/stats');
             setStats(res.data);
         } catch (error) {
             console.error('Error fetching earnings:', error);
@@ -29,9 +27,7 @@ const EarningsDashboard = () => {
             return toast.error('No funds available for withdrawal');
         }
         try {
-            await axios.post('http://localhost:5002/api/earnings/withdraw', {}, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
+            await api.post('/earnings/withdraw', {});
             toast.success('Withdrawal request initiated successfully!');
             fetchEarnings();
         } catch (error) {
@@ -141,10 +137,6 @@ const StatCard = ({ title, value, icon, bgColor }) => (
         <p className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-1">{title}</p>
         <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
     </div>
-);
-
-const CheckCircle = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
 );
 
 export default EarningsDashboard;
