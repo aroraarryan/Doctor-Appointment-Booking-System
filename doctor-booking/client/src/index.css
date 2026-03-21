@@ -1,1 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", serif;
+  --font-sans: "Inter", sans-serif;
+
+  --color-cream: #F2EFDF;
+  --color-forest: #1B2B21;
+  --color-forest-light: #2A3F31;
+  --color-accent-lime: #A4C639;
+  
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+}
+
+@layer base {
+  body {
+    @apply bg-cream text-forest font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif font-medium;
+  }
+
+  ::selection {
+    @apply bg-forest text-cream;
+  }
+}
+
+@layer components {
+  .serif-heading {
+    @apply font-serif;
+  }
+
+  .btn-primary {
+    @apply bg-forest text-cream px-8 py-3.5 rounded-full text-[10px] uppercase tracking-[0.2em] font-bold transition-all duration-300 hover:bg-forest-light hover:shadow-xl hover:-translate-y-0.5 inline-flex items-center justify-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply border border-forest/20 text-forest px-8 py-3.5 rounded-full text-[10px] uppercase tracking-[0.2em] font-bold transition-all duration-300 hover:bg-forest hover:text-cream hover:border-forest hover:shadow-xl hover:-translate-y-0.5 inline-flex items-center justify-center gap-2;
+  }
+
+  .section-padding {
+    @apply py-24 px-4 md:px-8 max-w-7xl mx-auto;
+  }
+
+  .card-glass {
+    @apply bg-white/40 backdrop-blur-md border border-white/20 rounded-[2rem] p-8 shadow-xl;
+  }
+
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl;
+  }
+}
+
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-15px) rotate(2deg); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float 8s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+.animate-float-slow {
+  animation: float 10s ease-in-out infinite;
+  animation-delay: 1s;
+}

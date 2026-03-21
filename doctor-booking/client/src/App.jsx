@@ -31,16 +31,17 @@ import EarningsDashboard from './pages/EarningsDashboard';
 import Invoices from './pages/Invoices';
 import NotFound from './pages/NotFound';
 import AnnouncementBanner from './components/AnnouncementBanner';
+import Footer from './components/Footer';
 
 function App() {
        return (
               <AuthProvider>
                      <Toaster position="top-right" />
                      <RealtimeProvider>
-                            <div className="min-h-screen bg-gray-50">
+                            <div className="min-h-screen bg-cream selection:bg-forest/10 selection:text-forest">
                                    <Navbar />
                                    <AnnouncementBanner />
-                                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                   <div className="w-full">
                                           <Routes>
                                                  <Route path="/" element={<Home />} />
                                                  <Route path="/login" element={<Login />} />
@@ -52,97 +53,134 @@ function App() {
                                                  {/* Protected Routes */}
                                                  <Route path="/dashboard" element={
                                                         <PrivateRoute>
-                                                                <RoleRoute allowedRoles={['patient']}><PatientDashboard /></RoleRoute>
+                                                               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                      <RoleRoute allowedRoles={['patient']}><PatientDashboard /></RoleRoute>
+                                                               </div>
                                                         </PrivateRoute>
                                                  } />
                                                  <Route path="/doctor/dashboard" element={
                                                         <PrivateRoute>
-                                                                <RoleRoute allowedRoles={['doctor']}><DoctorDashboard /></RoleRoute>
+                                                               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                      <RoleRoute allowedRoles={['doctor']}><DoctorDashboard /></RoleRoute>
+                                                               </div>
                                                         </PrivateRoute>
                                                  } />
                                                  <Route path="/admin/dashboard" element={
                                                         <PrivateRoute>
-                                                                <RoleRoute allowedRoles={['admin']}><AdminDashboard /></RoleRoute>
+                                                               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                      <RoleRoute allowedRoles={['admin']}><AdminDashboard /></RoleRoute>
+                                                               </div>
                                                         </PrivateRoute>
                                                  } />
                                                  <Route path="/messages" element={
                                                         <PrivateRoute>
-                                                               <Messages />
+                                                               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                      <Messages />
+                                                               </div>
                                                         </PrivateRoute>
                                                  } />
                                                  <Route path="/payments/history" element={
                                                         <PrivateRoute>
-                                                               <PaymentHistory />
+                                                               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                      <PaymentHistory />
+                                                               </div>
                                                         </PrivateRoute>
                                                  } />
                                                  <Route path="/security" element={
                                                         <PrivateRoute>
-                                                               <SecuritySettings />
+                                                               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                      <SecuritySettings />
+                                                               </div>
                                                         </PrivateRoute>
                                                  } />
                                                   <Route path="/health" element={
                                                          <PrivateRoute>
-                                                                <RoleRoute allowedRoles={['patient']}><HealthDashboard /></RoleRoute>
+                                                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                       <RoleRoute allowedRoles={['patient']}><HealthDashboard /></RoleRoute>
+                                                                </div>
                                                          </PrivateRoute>
                                                   } />
                                                   <Route path="/waitlist" element={
                                                          <PrivateRoute>
-                                                                <RoleRoute allowedRoles={['patient']}><MyWaitlist /></RoleRoute>
+                                                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                       <RoleRoute allowedRoles={['patient']}><MyWaitlist /></RoleRoute>
+                                                                </div>
                                                          </PrivateRoute>
                                                   } />
                                                   <Route path="/prescriptions" element={
                                                          <PrivateRoute>
-                                                                <RoleRoute allowedRoles={['patient']}><Prescriptions /></RoleRoute>
+                                                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                       <RoleRoute allowedRoles={['patient']}><Prescriptions /></RoleRoute>
+                                                                </div>
                                                          </PrivateRoute>
                                                   } />
                                                   <Route path="/medical-history" element={
                                                          <PrivateRoute>
-                                                                <RoleRoute allowedRoles={['patient']}><MedicalHistory /></RoleRoute>
+                                                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                       <RoleRoute allowedRoles={['patient']}><MedicalHistory /></RoleRoute>
+                                                                </div>
                                                          </PrivateRoute>
                                                   } />
                                                   <Route path="/second-opinion" element={
                                                          <PrivateRoute>
-                                                                <RoleRoute allowedRoles={['patient']}><SecondOpinion /></RoleRoute>
+                                                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                       <RoleRoute allowedRoles={['patient']}><SecondOpinion /></RoleRoute>
+                                                                </div>
                                                          </PrivateRoute>
                                                   } />
                                                   <Route path="/doctor/second-opinion-requests" element={
                                                          <PrivateRoute>
-                                                                <RoleRoute allowedRoles={['doctor']}><SecondOpinionRequests /></RoleRoute>
+                                                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                       <RoleRoute allowedRoles={['doctor']}><SecondOpinionRequests /></RoleRoute>
+                                                                </div>
                                                          </PrivateRoute>
                                                   } />
                                                   <Route path="/announcements" element={
                                                          <PrivateRoute>
-                                                                <Announcements />
+                                                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                       <Announcements />
+                                                                </div>
                                                          </PrivateRoute>
                                                   } />
                                                   <Route path="/analytics" element={
                                                          <PrivateRoute>
-                                                                <RoleRoute allowedRoles={['patient']}><PatientAnalytics /></RoleRoute>
+                                                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                       <RoleRoute allowedRoles={['patient']}><PatientAnalytics /></RoleRoute>
+                                                                </div>
                                                          </PrivateRoute>
                                                   } />
                                                   <Route path="/doctor/analytics" element={
                                                          <PrivateRoute>
-                                                                <RoleRoute allowedRoles={['doctor']}><DoctorAnalytics /></RoleRoute>
+                                                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                       <RoleRoute allowedRoles={['doctor']}><DoctorAnalytics /></RoleRoute>
+                                                                </div>
                                                          </PrivateRoute>
                                                   } />
                                                   <Route path="/doctor/subscription" element={
                                                          <PrivateRoute>
-                                                                <RoleRoute allowedRoles={['doctor']}><DoctorSubscription /></RoleRoute>
+                                                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                       <RoleRoute allowedRoles={['doctor']}><DoctorSubscription /></RoleRoute>
+                                                                </div>
                                                          </PrivateRoute>
                                                   } />
                                                   <Route path="/doctor/earnings" element={
                                                          <PrivateRoute>
-                                                                <RoleRoute allowedRoles={['doctor']}><EarningsDashboard /></RoleRoute>
+                                                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                       <RoleRoute allowedRoles={['doctor']}><EarningsDashboard /></RoleRoute>
+                                                                </div>
                                                          </PrivateRoute>
                                                   } />
                                                   <Route path="/invoices" element={
                                                          <PrivateRoute>
-                                                                <Invoices />
+                                                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                                                                       <Invoices />
+                                                                </div>
                                                          </PrivateRoute>
                                                   } />
                                                  <Route path="*" element={<NotFound />} />
                                           </Routes>
                                    </div>
+                                   <Footer />
                             </div>
                      </RealtimeProvider>
               </AuthProvider>
